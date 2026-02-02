@@ -1,7 +1,0 @@
-{
-  "name": "Rêve - Uber for your Closet",
-  "description": "A peer-to-peer social clothing lending platform for university students. Features AI-powered outfit analysis, discovery, and product search.",
-  "requestFramePermissions": [
-    "camera"
-  ]
-}
