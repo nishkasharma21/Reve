@@ -32,21 +32,19 @@ saml_bp = Blueprint('saml', __name__)
 
 @saml_bp.route('/metadata')
 def saml_metadata():
-    metadata_xml = "<xml>Example SAML Metadata</xml>"
+    metadata_xml = """<?xml version="1.0"?>
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
+                     validUntil="2026-02-07T10:12:55Z"
+                     cacheDuration="PT604800S"
+                     entityID="https://goreve-d2e7c1150e3c.herokuapp.com/saml/metadata">
+    <md:SPSSODescriptor AuthnRequestsSigned="false" WantAssertionsSigned="false" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+        <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</md:NameIDFormat>
+        <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+                                     Location="https://goreve-d2e7c1150e3c.herokuapp.com/saml/acs"
+                                     index="1" />
+    </md:SPSSODescriptor>
+</md:EntityDescriptor>"""
     return Response(metadata_xml, mimetype='application/xml')
-    # req = prepare_flask_request(request)
-    # auth = init_saml_auth(req)
-    # settings = auth.get_settings()
-    # metadata = settings.get_sp_metadata()
-    # errors = settings.validate_metadata(metadata)
-    
-    # if len(errors) == 0:
-    #     resp = make_response(metadata, 200)
-    #     resp.headers['Content-Type'] = 'text/xml'
-    #     return resp
-    # else:
-    #     # Metadata validation failed - this shouldn't happen if settings are correct
-    #     return f"Error: {', '.join(errors)}", 500
 
 @saml_bp.route('/acs', methods=['POST'])
 def saml_acs():
