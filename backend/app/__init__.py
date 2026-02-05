@@ -16,9 +16,6 @@ def create_app():
 
     db.init_app(app)
 
-    from .routes import main
-    app.register_blueprint(main)
-
     # Configure session
     app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
     app.config['SESSION_TYPE'] = 'filesystem'
