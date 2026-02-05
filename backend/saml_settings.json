@@ -2,13 +2,13 @@
     "strict": true,
     "debug": false,
     "sp": {
-        "entityId": "https://your-app-domain.com/saml/metadata",
+        "entityId": "https://goreve.store/saml/metadata",
         "assertionConsumerService": {
-            "url": "https://your-app-domain.com/saml/acs",
+            "url": "https://goreve.store/saml/acs",
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
         },
         "singleLogoutService": {
-            "url": "https://your-app-domain.com/saml/sls",
+            "url": "https://goreve.store/saml/sls",
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
         },
         "NameIDFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
