@@ -11,7 +11,7 @@
 
 
 from flask import Flask, session
-from saml_routes import saml_bp  # the file where your blueprint lives
+from saml import saml_bp  # the file where your blueprint lives
 import os
 
 app = Flask(__name__)
