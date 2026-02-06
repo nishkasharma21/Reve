@@ -17,7 +17,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-from models import User, Item, BorrowRequest, Conversation, Message
+from backend.models import User, Item, BorrowRequest, Conversation, Message
 # Register the blueprint
 app.register_blueprint(saml_bp, url_prefix='/saml')  # optional prefix
 
