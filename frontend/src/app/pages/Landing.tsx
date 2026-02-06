@@ -4,13 +4,38 @@ import { useNavigate } from 'react-router';
 
 export function Landing() {
   const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Mock waitlist submission - in production, would call API
-    alert(`Thanks for joining! We'll email you at ${email}`);
-    setEmail('');
+    setStatus({ type: null, message: '' }); // Clear previous status
+    
+    // Optional: Quick frontend check for better UX
+    if (!email.endsWith('@stanford.edu')) {
+      setStatus({ type: 'error', message: 'Please use your @stanford.edu email' });
+      return;
+    }
+    
+    try {
+      const response = await fetch('https://eoln2aaihet4vzk.m.pipedream.net', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+      
+      if (response.ok) {
+        setStatus({ type: 'success', message: 'Successfully joined the waitlist!' });
+        setEmail('');
+      } else {
+        setStatus({ type: 'error', message: 'Something went wrong' });
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setStatus({ type: 'error', message: 'Failed to join waitlist' });
+    }
   };
 
   return (
@@ -37,12 +62,6 @@ export function Landing() {
           >
             REVE
           </div>
-          {/* <button
-            onClick={() => navigate('/home')}
-            className="px-6 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-white hover:bg-white/20 transition-all"
-          >
-            Enter App
-          </button> */}
         </div>
       </header>
 
@@ -77,7 +96,7 @@ export function Landing() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your .edu email"
+                placeholder="Enter your @stanford.edu email"
                 required
                 className="flex-1 px-6 py-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white placeholder:text-white/40 focus:outline-none focus:border-[#ff00ff] focus:ring-2 focus:ring-[#ff00ff]/50 transition-all"
               />
@@ -92,9 +111,19 @@ export function Landing() {
                 Join Waitlist
               </button>
             </form>
-            <p className="text-sm text-white/50 mt-3">
-              🎓 College-only access • Launching at top campuses
-            </p>
+            
+            {/* Status Message */}
+            {status.type && (
+              <p className={`text-sm mt-3 font-medium ${status.type === 'success' ? 'text-green-400' : 'text-red-400'}`}>
+                {status.message}
+              </p>
+            )}
+            
+            {!status.type && (
+              <p className="text-sm text-white/50 mt-3">
+                🎓 College-only access • Launching at top campuses
+              </p>
+            )}
           </div>
 
           {/* Social Proof */}
