@@ -4,3 +4,4 @@ saml.key
 *.crt
 *.key
 *.pem
+.venv
