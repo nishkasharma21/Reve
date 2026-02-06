@@ -54,9 +54,9 @@ def saml_metadata():
     
     metadata_xml = f"""<?xml version="1.0"?>
         <md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
-                            validUntil="2026-02-07T10:12:55Z"
+                            validUntil="2027-02-06T10:12:55Z"
                             cacheDuration="PT604800S"
-                            entityID="https://goreve-d2e7c1150e3c.herokuapp.com/saml/metadata">
+                            entityID="http://goreve.store/saml/metadata">
             <md:SPSSODescriptor AuthnRequestsSigned="false" WantAssertionsSigned="false" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
                 <md:KeyDescriptor use="encryption">
                     <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
@@ -67,7 +67,7 @@ def saml_metadata():
                 </md:KeyDescriptor>
                 <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</md:NameIDFormat>
                 <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
-                                            Location="https://goreve-d2e7c1150e3c.herokuapp.com/saml/acs"
+                                            Location="http://goreve.store/saml/acs"
                                             index="1" />
             </md:SPSSODescriptor>
         </md:EntityDescriptor>"""
