@@ -2,13 +2,13 @@
     "strict": true,
     "debug": false,
     "sp": {
-        "entityId": "http://goreve.store/saml/metadata",
+        "entityId": "https://goreve-d2e7c1150e3c.herokuapp.com/saml/metadata",
         "assertionConsumerService": {
-            "url": "http://goreve.store/saml/acs",
+            "url": "https://goreve-d2e7c1150e3c.herokuapp.com/saml/acs",
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
         },
         "singleLogoutService": {
-            "url": "http://goreve.store/saml/sls",
+            "url": "https://goreve-d2e7c1150e3c.herokuapp.com/saml/sls",
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
         },
         "NameIDFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",

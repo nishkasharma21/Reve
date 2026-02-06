@@ -12,28 +12,28 @@ export const router = createBrowserRouter([
     path: '/',
     Component: Landing,
   },
-  {
-    path: '/home',
-    Component: Home,
-  },
-  {
-    path: '/profile',
-    Component: Profile,
-  },
-  {
-    path: '/search',
-    Component: Search,
-  },
-  {
-    path: '/post',
-    Component: Post,
-  },
-  {
-    path: '/messages',
-    Component: Messages,
-  },
-  {
-    path: '*',
-    Component: NotFound,
-  },
+  // {
+  //   path: '/home',
+  //   Component: Home,
+  // },
+  // {
+  //   path: '/profile',
+  //   Component: Profile,
+  // },
+  // {
+  //   path: '/search',
+  //   Component: Search,
+  // },
+  // {
+  //   path: '/post',
+  //   Component: Post,
+  // },
+  // {
+  //   path: '/messages',
+  //   Component: Messages,
+  // },
+  // {
+  //   path: '*',
+  //   Component: NotFound,
+  // },
 ]);

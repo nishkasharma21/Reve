@@ -37,12 +37,12 @@ export function Landing() {
           >
             REVE
           </div>
-          <button
+          {/* <button
             onClick={() => navigate('/home')}
             className="px-6 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-white hover:bg-white/20 transition-all"
           >
             Enter App
-          </button>
+          </button> */}
         </div>
       </header>
 
