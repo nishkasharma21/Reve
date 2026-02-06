@@ -3,19 +3,24 @@ from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 import json
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 saml_bp = Blueprint('saml', __name__)
 
-# def init_saml_auth(req):
-
-#     settings_file = os.path.join(os.path.dirname(__file__), '..', 'saml_settings.json')
+def init_saml_auth(req):
+    settings_file = os.path.join(os.path.dirname(__file__), '..', 'saml_settings.json')
     
-#     # Load the SAML configuration from the JSON file
-#     with open(settings_file) as f:
-#         settings = json.load(f)
-
-#     auth = OneLogin_Saml2_Auth(req, settings)
-#     return auth
+    # Load the SAML configuration from the JSON file
+    with open(settings_file) as f:
+        settings = json.load(f)
+    
+    # Inject credentials from environment variables
+    settings['sp']['x509cert'] = os.environ.get('SAML_CERT', '')
+    settings['sp']['privateKey'] = os.environ.get('SAML_PRIVATE_KEY', '')
+    
+    auth = OneLogin_Saml2_Auth(req, settings)
+    return auth
 
 # def prepare_flask_request(request):
 #     # for requests coming into flask
@@ -32,18 +37,41 @@ saml_bp = Blueprint('saml', __name__)
 
 @saml_bp.route('/metadata')
 def saml_metadata():
-    metadata_xml = """<?xml version="1.0"?>
-<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
-                     validUntil="2026-02-07T10:12:55Z"
-                     cacheDuration="PT604800S"
-                     entityID="https://goreve-d2e7c1150e3c.herokuapp.com/saml/metadata">
-    <md:SPSSODescriptor AuthnRequestsSigned="false" WantAssertionsSigned="false" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
-        <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</md:NameIDFormat>
-        <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
-                                     Location="https://goreve-d2e7c1150e3c.herokuapp.com/saml/acs"
-                                     index="1" />
-    </md:SPSSODescriptor>
-</md:EntityDescriptor>"""
+    # Read certificate from environment variable
+    cert_content = os.environ.get('SAML_CERT')
+    
+    if not cert_content:
+        return Response("SAML certificate not configured", status=500)
+    
+    # Handle escaped newlines from environment variable
+    cert_content = cert_content.replace('\\n', '\n')
+    
+    # Extract just the certificate data (remove BEGIN/END lines)
+    cert_data = ''.join([line for line in cert_content.split('\n') 
+                        if not line.startswith('-----')])
+    
+    # ... rest of your code
+    
+    metadata_xml = f"""<?xml version="1.0"?>
+        <md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
+                            validUntil="2026-02-07T10:12:55Z"
+                            cacheDuration="PT604800S"
+                            entityID="https://goreve-d2e7c1150e3c.herokuapp.com/saml/metadata">
+            <md:SPSSODescriptor AuthnRequestsSigned="false" WantAssertionsSigned="false" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+                <md:KeyDescriptor use="encryption">
+                    <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+                        <ds:X509Data>
+                            <ds:X509Certificate>{cert_data}</ds:X509Certificate>
+                        </ds:X509Data>
+                    </ds:KeyInfo>
+                </md:KeyDescriptor>
+                <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</md:NameIDFormat>
+                <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+                                            Location="https://goreve-d2e7c1150e3c.herokuapp.com/saml/acs"
+                                            index="1" />
+            </md:SPSSODescriptor>
+        </md:EntityDescriptor>"""
+    
     return Response(metadata_xml, mimetype='application/xml')
 
 @saml_bp.route('/acs', methods=['POST'])

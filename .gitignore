@@ -1,0 +1,6 @@
+.env
+saml.crt
+saml.key
+*.crt
+*.key
+*.pem
