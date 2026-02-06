@@ -1,29 +1,37 @@
-from flask import Flask, session
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from backend.saml import saml_bp  # the file where your blueprint lives
+from flask import Flask
+from backend.extensions import db, migrate
+from backend.saml import saml_bp
 import os
 
-app = Flask(__name__)
-# app.secret_key = os.environ.get("FLASK_SECRET_KEY")
+def create_app():
+    app = Flask(__name__)
 
-uri = os.environ.get('DATABASE_URL')
-if uri and uri.startswith('postgres://'):
-    uri = uri.replace('postgres://', 'postgresql://', 1)
+    uri = os.environ.get("DATABASE_URL")
+    if uri and uri.startswith("postgres://"):
+        uri = uri.replace("postgres://", "postgresql://", 1)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = uri or 'sqlite:///app.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config["SQLALCHEMY_DATABASE_URI"] = uri or "sqlite:///app.db"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
+    # Initialize extensions
+    db.init_app(app)
+    migrate.init_app(app, db)
 
-from backend.models import User, Item, BorrowRequest, Conversation, Message
-# Register the blueprint
-app.register_blueprint(saml_bp, url_prefix='/saml')  # optional prefix
+    # Register blueprints
+    app.register_blueprint(saml_bp, url_prefix="/saml")
 
-@app.route("/")
-def home():
-    return "Hello, Flask!"
+    # Import models AFTER db is initialized
+    with app.app_context():
+        from backend import models
+
+    @app.route("/")
+    def home():
+        return "Hello, Flask!"
+
+    return app
+
+
+app = create_app()
 
 if __name__ == "__main__":
     app.run(debug=True)
