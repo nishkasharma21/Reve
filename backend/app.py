@@ -1,7 +1,9 @@
 from flask import Flask
-from backend.extensions import db, migrate
-from backend.saml import saml_bp
+from extensions import db, migrate
+from saml import saml_bp
 import os
+from routes.waitlist import waitlist_bp ## route for waitlist
+import models
 
 def create_app():
     app = Flask(__name__)
@@ -19,10 +21,12 @@ def create_app():
 
     # Register blueprints
     app.register_blueprint(saml_bp, url_prefix="/saml")
+    app.register_blueprint(waitlist_bp, url_prefix="/api")
 
     # Import models AFTER db is initialized
     with app.app_context():
-        from backend import models
+        # from backend import models
+        import models
 
     @app.route("/")
     def home():
