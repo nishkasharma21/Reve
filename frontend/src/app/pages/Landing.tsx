@@ -20,7 +20,7 @@ export function Landing() {
     }
     
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/waitlist', {
+      const response = await fetch('https://goreve-d2e7c1150e3c.herokuapp.com/api/waitlist', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
