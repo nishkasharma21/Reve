@@ -1,5 +1,5 @@
 from flask import Flask, session
-from saml import saml_bp  # the file where your blueprint lives
+from backend.saml import saml_bp  # the file where your blueprint lives
 import os
 
 app = Flask(__name__)
