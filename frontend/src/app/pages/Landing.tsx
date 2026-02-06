@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
 export function Landing() {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
   const navigate = useNavigate();
@@ -18,16 +20,18 @@ export function Landing() {
     }
     
     try {
-      const response = await fetch('https://eoln2aaihet4vzk.m.pipedream.net', {
+      const response = await fetch('http://127.0.0.1:5000/api/waitlist', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ firstName, lastName, email }),
       });
       
       if (response.ok) {
         setStatus({ type: 'success', message: 'Successfully joined the waitlist!' });
+        setFirstName('');
+        setLastName('');
         setEmail('');
       } else {
         setStatus({ type: 'error', message: 'Something went wrong' });
@@ -91,25 +95,48 @@ export function Landing() {
 
           {/* Waitlist Form */}
           <div className="max-w-md mx-auto mb-6">
-            <form onSubmit={handleSubmit} className="flex gap-3">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your @stanford.edu email"
-                required
-                className="flex-1 px-6 py-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white placeholder:text-white/40 focus:outline-none focus:border-[#ff00ff] focus:ring-2 focus:ring-[#ff00ff]/50 transition-all"
-              />
-              <button
-                type="submit"
-                className="px-8 py-4 rounded-full font-bold text-white transition-all"
-                style={{
-                  background: 'linear-gradient(135deg, #ff00ff, #9d00ff)',
-                  boxShadow: '0 0 30px rgba(255, 0, 255, 0.5)',
-                }}
-              >
-                Join Waitlist
-              </button>
+            <form onSubmit={handleSubmit} className="space-y-3">
+              {/* Name Fields Row */}
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="First name"
+                  required
+                  className="flex-1 px-6 py-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white placeholder:text-white/40 focus:outline-none focus:border-[#ff00ff] focus:ring-2 focus:ring-[#ff00ff]/50 transition-all"
+                />
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Last name"
+                  required
+                  className="flex-1 px-6 py-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white placeholder:text-white/40 focus:outline-none focus:border-[#ff00ff] focus:ring-2 focus:ring-[#ff00ff]/50 transition-all"
+                />
+              </div>
+              
+              {/* Email and Button Row */}
+              <div className="flex gap-3">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your @stanford.edu email"
+                  required
+                  className="flex-1 px-6 py-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white placeholder:text-white/40 focus:outline-none focus:border-[#ff00ff] focus:ring-2 focus:ring-[#ff00ff]/50 transition-all"
+                />
+                <button
+                  type="submit"
+                  className="px-8 py-4 rounded-full font-bold text-white transition-all"
+                  style={{
+                    background: 'linear-gradient(135deg, #ff00ff, #9d00ff)',
+                    boxShadow: '0 0 30px rgba(255, 0, 255, 0.5)',
+                  }}
+                >
+                  Join Waitlist
+                </button>
+              </div>
             </form>
             
             {/* Status Message */}
