@@ -9,6 +9,7 @@ def create_app():
     app = Flask(__name__)
     CORS(app)
 
+    app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY') or os.environ.get('SECRET_KEY')
     uri = os.environ.get("DATABASE_URL")
     if uri and uri.startswith("postgres://"):
         uri = uri.replace("postgres://", "postgresql://", 1)
