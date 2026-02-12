@@ -89,21 +89,13 @@ def saml_acs():
     if not auth.is_authenticated():
         return "Authentication failed", 401
     
-    if len(errors) == 0:
-        session['samlUserdata'] = auth.get_attributes()
-        session['samlNameId'] = auth.get_nameid()
-        session['samlSessionIndex'] = auth.get_session_index()
-        
-        self_url = OneLogin_Saml2_Utils.get_self_url(req)
-        
-        if 'RelayState' in request.form and self_url != request.form['RelayState']:
-            relay_state = request.form.get('RelayState')
-            if relay_state and relay_state.startswith('/'):
-                return redirect(relay_state)
-        else:
-            return redirect(url_for('home'))
-    else:
-        return f"Error: {', '.join(errors)}", 400
+    # Save user data to session
+    session['samlUserdata'] = auth.get_attributes()
+    session['samlNameId'] = auth.get_nameid()
+    session['samlSessionIndex'] = auth.get_session_index()
+    
+    # Always return a redirect
+    return redirect(url_for('home'))
     
 
 @saml_bp.route('/login')
