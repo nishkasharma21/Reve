@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router';
 import { Landing } from './pages/Landing';
+import { Onboarding } from './pages/Onboarding';
 import { Home } from './pages/Home';
 import { Profile } from './pages/Profile';
 import { Search } from './pages/Search';
@@ -11,6 +12,10 @@ export const router = createBrowserRouter([
   {
     path: '/',
     Component: Landing,
+  },
+  {
+    path: '/onboard',
+    Component: Onboarding,
   },
   // {
   //   path: '/home',
