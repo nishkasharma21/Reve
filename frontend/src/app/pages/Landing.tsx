@@ -22,7 +22,7 @@ export function Landing() {
     setStatus({ type: null, message: '' });
     
     if (!formData.firstName || !formData.lastName || !formData.email) {
-      setStatus({ type: 'error', message: 'Please fill in all fields' });
+      setStatus({ type: 'error', message: 'Please fill in all fields!' });
       return;
     }
     
