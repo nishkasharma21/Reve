@@ -105,6 +105,12 @@ export function Home() {
                 Messages
               </button>
               <button 
+                onClick={() => window.location.href = 'https://goreve-d2e7c1150e3c.herokuapp.com/saml/logout'}
+                className="px-4 py-2 text-sm font-medium text-white/60 hover:text-white border border-white/10 hover:border-red-500/50 rounded-lg transition-all"
+              >
+                Log Out
+              </button>
+              <button 
                 onClick={() => navigate('/profile')}
                 className="w-10 h-10 rounded-full bg-gradient-to-br from-[#ff00ff] to-[#9d00ff] border-2 border-white/20"
               />

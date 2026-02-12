@@ -107,17 +107,34 @@ def saml_login():
 
 @saml_bp.route('/logout')
 def saml_logout():
-    req = prepare_flask_request(request)
-    auth = init_saml_auth(req)
-    name_id = session.get('samlNameId')
-    session_index = session.get('samlSessionIndex')
-    return redirect(
-        auth.logout(
-            name_id=name_id,
-            session_index=session_index,
-            return_to='http://localhost:5173/home'
-        )
-    )
+    # 1. Completely clear the user's session in your Flask app
+    session.clear()
+    
+    # 2. Redirect the browser immediately back to your local frontend
+    # This bypasses the Stanford "Attempting to log out" screen
+    return redirect('http://localhost:5173/')
+
+# @saml_bp.route('/logout')
+# def saml_logout():
+#     req = prepare_flask_request(request)
+#     auth = init_saml_auth(req)
+    
+#     # 1. Get identifiers needed for a global logout
+#     name_id = session.get('samlNameId')
+#     session_index = session.get('samlSessionIndex')
+    
+#     # 2. Clear your local session first
+#     session.clear()
+    
+#     # 3. Trigger the SAML Global Logout
+#     # This sends the user to the Stanford page in your screenshot
+#     return redirect(
+#         auth.logout(
+#             name_id=name_id,
+#             session_index=session_index,
+#             return_to='http://localhost:5173/'
+#         )
+#     )
 
 
 @saml_bp.route('/sls')
