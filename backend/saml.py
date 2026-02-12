@@ -97,7 +97,7 @@ def saml_acs():
             if relay_state and relay_state.startswith('/'):
                 return redirect(relay_state)
         else:
-            return redirect(url_for('main.index'))
+            return redirect(url_for('home'))
     else:
         return f"Error: {', '.join(errors)}", 400
     
@@ -106,7 +106,7 @@ def saml_acs():
 def saml_login():
     req = prepare_flask_request(request)
     auth = init_saml_auth(req)
-    return redirect(auth.login(return_to=url_for('main.index', _external=True)))
+    return redirect(auth.login(return_to=url_for('home', _external=True)))
 
 
 @saml_bp.route('/logout')
@@ -119,7 +119,7 @@ def saml_logout():
         auth.logout(
             name_id=name_id,
             session_index=session_index,
-            return_to=url_for('main.index', _external=True)
+            return_to=url_for('home', _external=True)
         )
     )
 
@@ -137,6 +137,6 @@ def saml_sls():
         if url is not None:
             return redirect(url)
         else:
-            return redirect(url_for('main.index'))
+            return redirect(url_for('home'))
     else:
         return f"Error: {', '.join(errors)}", 400
