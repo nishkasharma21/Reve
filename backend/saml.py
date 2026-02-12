@@ -17,7 +17,7 @@ def init_saml_auth(req):
     
     # Inject credentials from environment variables
     settings['sp']['x509cert'] = os.environ.get('SAML_CERT', '')
-    settings['sp']['privateKey'] = os.environ.get('SAML_PRIVATE_KEY', '')
+    settings['sp']['privateKey'] = os.environ.get('SAML_KEY', '')
     
     auth = OneLogin_Saml2_Auth(req, settings)
     return auth
