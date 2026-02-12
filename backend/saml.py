@@ -17,7 +17,7 @@ def init_saml_auth(req):
     
     # Inject credentials from environment variables
     settings['sp']['x509cert'] = os.environ.get('SAML_CERT', '')
-    settings['sp']['privateKey'] = os.environ.get('SAML_PRIVATE_KEY', '')
+    settings['sp']['privateKey'] = os.environ.get('SAML_KEY', '')
     
     auth = OneLogin_Saml2_Auth(req, settings)
     return auth
@@ -56,7 +56,7 @@ def saml_metadata():
         <md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
                             validUntil="2027-02-06T10:12:55Z"
                             cacheDuration="PT604800S"
-                            entityID="http://goreve.store/saml/metadata">
+                            entityID="entityID="https://goreve-d2e7c1150e3c.herokuapp.com/saml/metadata"">
             <md:SPSSODescriptor AuthnRequestsSigned="false" WantAssertionsSigned="false" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
                 <md:KeyDescriptor use="encryption">
                     <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
@@ -67,7 +67,7 @@ def saml_metadata():
                 </md:KeyDescriptor>
                 <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</md:NameIDFormat>
                 <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
-                                            Location="http://goreve.store/saml/acs"
+                                            Location="https://goreve-d2e7c1150e3c.herokuapp.com/saml/acs"
                                             index="1" />
             </md:SPSSODescriptor>
         </md:EntityDescriptor>"""
