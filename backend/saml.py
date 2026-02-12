@@ -6,6 +6,9 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
+SAML_DEV_FRONTEND_URL = os.environ.get('SAML_DEV_FRONTEND_URL')
+SAML_PROD_FRONTEND_URL = os.environ.get('SAML_PROD_FRONTEND_URL')
+
 saml_bp = Blueprint('saml', __name__)
 
 def init_saml_auth(req):
@@ -95,24 +98,15 @@ def saml_acs():
     session['samlSessionIndex'] = auth.get_session_index()
     
     # Always return a redirect
-    return redirect('http://localhost:5173/home')
+    return redirect(SAML_PROD_FRONTEND_URL)
     
 
 @saml_bp.route('/login')
 def saml_login():
     req = prepare_flask_request(request)
     auth = init_saml_auth(req)
-    return redirect(auth.login(return_to='http://localhost:5173/home'))
+    return redirect(auth.login(return_to=SAML_PROD_FRONTEND_URL))
 
-
-# @saml_bp.route('/logout')
-# def saml_logout():
-#     # 1. Completely clear the user's session in your Flask app
-#     session.clear()
-    
-#     # 2. Redirect the browser immediately back to your local frontend
-#     # This bypasses the Stanford "Attempting to log out" screen
-#     return redirect('http://localhost:5173/')
 
 @saml_bp.route('/logout')
 def saml_logout():
@@ -132,7 +126,7 @@ def saml_logout():
         auth.logout(
             name_id=name_id,
             session_index=session_index,
-            return_to='http://localhost:5173/'
+            return_to=SAML_PROD_FRONTEND_URL
         )
     )
 
