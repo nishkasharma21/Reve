@@ -95,14 +95,14 @@ def saml_acs():
     session['samlSessionIndex'] = auth.get_session_index()
     
     # Always return a redirect
-    return redirect(url_for('home'))
+    return redirect('http://localhost:5173/home')
     
 
 @saml_bp.route('/login')
 def saml_login():
     req = prepare_flask_request(request)
     auth = init_saml_auth(req)
-    return redirect(auth.login(return_to=url_for('home', _external=True)))
+    return redirect(auth.login(return_to='http://localhost:5173/home'))
 
 
 @saml_bp.route('/logout')
@@ -115,7 +115,7 @@ def saml_logout():
         auth.logout(
             name_id=name_id,
             session_index=session_index,
-            return_to=url_for('home', _external=True)
+            return_to='http://localhost:5173/home'
         )
     )
 
@@ -136,3 +136,16 @@ def saml_sls():
             return redirect(url_for('home'))
     else:
         return f"Error: {', '.join(errors)}", 400
+    
+@saml_bp.route('/status')
+def saml_status():
+    if 'samlUserdata' in session:
+        return {
+            'authenticated': True,
+            'user': {
+                'email': session.get('samlNameId'),
+                'attributes': session.get('samlUserdata')
+            }
+        }, 200
+    else:
+        return {'authenticated': False}, 200

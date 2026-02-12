@@ -1,9 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../ThemeContent';
 import { Users, Sparkles, Shirt, Instagram, TrendingUp, Menu, X, Moon, Sun } from 'lucide-react';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { useAuth } from '../../contexts/AuthContexts';
 
 export function Landing() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user && !loading) {
+      const hasCompletedOnboarding = localStorage.getItem('onboardingComplete');
+      navigate(hasCompletedOnboarding ? '/home' : '/onboard');
+    }
+  }, [user, loading, navigate]);
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -65,6 +77,14 @@ export function Landing() {
     element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  if (loading) {
+    return <div>Loading...</div>; // Add your loading spinner
+  }
+
+  const handleStanfordLogin = () => {
+    window.location.href = 'https://goreve-d2e7c1150e3c.herokuapp.com/saml/login';
+  };
+
   return (
     <div className={`min-h-screen ${isDark ? 'bg-[#0a0a1f] text-white' : 'bg-gray-50 text-gray-900'} overflow-x-hidden transition-colors duration-300`}>
       {/* Navbar */}
@@ -101,6 +121,13 @@ export function Landing() {
             >
               Join Waitlist
             </button>
+            <button
+              onClick={handleStanfordLogin}
+              className="w-full px-8 py-4 bg-[#8C1515] text-white font-bold rounded-xl hover:bg-[#7A0F0F] transition-all flex items-center justify-center gap-3"
+            >
+              <span>🌲</span>
+              Login with Stanford
+      </button>
           </div>
 
           {/* Mobile Menu Button */}
