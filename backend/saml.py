@@ -80,7 +80,11 @@ def saml_acs():
     errors = auth.get_errors()
 
     if errors:
-        return f"Error: {', '.join(errors)}", 400
+        # Print detailed error info
+        error_reason = auth.get_last_error_reason()
+        print(f"SAML Errors: {errors}")
+        print(f"Error Reason: {error_reason}")
+        return f"Error: {', '.join(errors)}<br>Reason: {error_reason}", 400
 
     if not auth.is_authenticated():
         return "Authentication failed", 401

@@ -1,6 +1,6 @@
 {
-    "strict": true,
-    "debug": false,
+    "strict": false,
+    "debug": true,
     "sp": {
         "entityId": "https://goreve-d2e7c1150e3c.herokuapp.com/saml/metadata",
         "assertionConsumerService": {
