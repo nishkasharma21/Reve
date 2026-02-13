@@ -4,7 +4,7 @@ saml.key
 *.crt
 *.key
 *.pem
-venv/
+.venv/
 instance/
 backend/__pycache__/
 migrations/__pycache__/
