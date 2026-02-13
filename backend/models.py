@@ -15,6 +15,12 @@ class User(db.Model):
     profile_pic = db.Column(db.String(255))
     dorm_location = db.Column(db.String(100))
     
+    # Onboarding Fields 
+    topStyle = db.Column(db.String(100), nullable=True)
+    bottomStyle = db.Column(db.String(100), nullable=True)
+    height = db.Column(db.String(50), nullable=True)
+    weight = db.Column(db.String(50), nullable=True)
+    
     # Timestamp
     created_at = db.Column(db.DateTime, server_default=func.now())
     

@@ -10,7 +10,7 @@ interface OnboardingData {
   bottomStyle?: string;
   height?: string;
   weight?: string;
-  dorm?: string;
+  dorm_location?: string;
 }
 
 const topStyles = [

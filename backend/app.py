@@ -5,6 +5,7 @@ from backend.saml import saml_bp
 from backend.routes.waitlist import waitlist_bp
 import os
 
+
 def create_app():
     app = Flask(__name__)
     CORS(app)
@@ -13,12 +14,13 @@ def create_app():
     if uri and uri.startswith("postgres://"):
         uri = uri.replace("postgres://", "postgresql://", 1)
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = uri or "sqlite:///app.db"
+    app.config["SQLALCHEMY_DATABASE_URI"] = uri or f"sqlite:///{os.path.join(app.instance_path, 'app.db')}"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
+    from backend import models
 
     # Register blueprints
     app.register_blueprint(saml_bp, url_prefix="/saml")
