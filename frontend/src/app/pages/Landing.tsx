@@ -39,7 +39,7 @@ export function Landing() {
     }
     
     if (!formData.email.endsWith('@stanford.edu')) {
-      setStatus({ type: 'error', message: 'Please use your @stanford.edu email' });
+      setStatus({ type: 'error', message: 'Please make sure to use your @stanford.edu email' });
       return;
     }
     
@@ -121,13 +121,13 @@ export function Landing() {
             >
               Join Waitlist
             </button>
-            <button
+            {/* <button
               onClick={handleStanfordLogin}
               className="w-full px-8 py-4 bg-[#8C1515] text-white font-bold rounded-xl hover:bg-[#7A0F0F] transition-all flex items-center justify-center gap-3"
             >
               <span>🌲</span>
               Login with Stanford
-      </button>
+            </button> */}
           </div>
 
           {/* Mobile Menu Button */}
