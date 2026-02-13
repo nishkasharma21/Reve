@@ -3,10 +3,31 @@ from flask_cors import CORS
 from backend.extensions import db, migrate
 from backend.saml import saml_bp
 from backend.routes.waitlist import waitlist_bp
+from flask_session import Session
+import redis
 import os
 
 def create_app():
     app = Flask(__name__)
+
+    # Redis session configuration
+    app.config['SESSION_TYPE'] = 'redis'
+    app.config['SESSION_PERMANENT'] = True
+    app.config['SESSION_USE_SIGNER'] = True
+    app.config['SESSION_KEY_PREFIX'] = 'saml_session:'
+    app.config['PERMANENT_SESSION_LIFETIME'] = 3600
+    app.config['SESSION_REDIS'] = redis.from_url(
+        os.environ.get('REDIS_URL', 'redis://localhost:6379')
+    )
+
+    # Still need these for the session cookie itself
+    app.config['SESSION_COOKIE_SECURE'] = True
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+    # Initialize Flask-Session
+    Session(app)
+
     CORS(app, 
          supports_credentials=True, 
          origins=['http://localhost:3000', 'http://localhost:5173', 'https://goreve.store'])
