@@ -5,6 +5,8 @@ from backend.saml import saml_bp
 from backend.routes.waitlist import waitlist_bp
 import os
 
+SAML_PROD_FRONTEND_URL = os.getenv('SAML_PROD_FRONTEND_URL', 'http://localhost:3000')
+
 def create_app():
     app = Flask(__name__)
     CORS(app, 
