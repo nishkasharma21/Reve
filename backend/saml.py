@@ -3,11 +3,9 @@ from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 import json
 import os
-from dotenv import load_dotenv
-load_dotenv()
 
-SAML_DEV_FRONTEND_URL = os.environ.get('SAML_DEV_FRONTEND_URL')
-SAML_PROD_FRONTEND_URL = os.environ.get('SAML_PROD_FRONTEND_URL')
+SAML_DEV_FRONTEND_URL = os.getenv('SAML_DEV_FRONTEND_URL', 'http://localhost:3000')
+SAML_PROD_FRONTEND_URL = os.getenv('SAML_PROD_FRONTEND_URL', 'https://goreve.store/home')
 
 saml_bp = Blueprint('saml', __name__)
 
