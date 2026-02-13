@@ -12,6 +12,12 @@ def create_app():
     CORS(app, 
          supports_credentials=True, 
          origins=['http://localhost:3000', 'http://localhost:5173', 'https://goreve.store'])
+    
+    # ADD THESE SESSION CONFIGURATIONS
+    app.config['SESSION_COOKIE_SECURE'] = True  # Required for HTTPS
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Critical for cross-origin
+    app.config['SESSION_COOKIE_DOMAIN'] = None  # Let Flask handle it
 
     app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY') or os.environ.get('SECRET_KEY')
     uri = os.environ.get("DATABASE_URL")
