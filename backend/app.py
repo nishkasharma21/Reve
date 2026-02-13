@@ -9,23 +9,33 @@ import os
 
 def create_app():
     app = Flask(__name__)
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 
-    # Redis session configuration
+    # Get Redis URL and configure SSL properly for Heroku
+    redis_url = os.environ.get('REDIS_URL')
+
+    # Parse and configure Redis with SSL settings
+    if redis_url and redis_url.startswith('rediss://'):
+        # For SSL connections, disable certificate verification
+        app.config['SESSION_REDIS'] = redis.from_url(
+            redis_url,
+            ssl_cert_reqs=None,
+            decode_responses=False
+        )
+    else:
+        app.config['SESSION_REDIS'] = redis.from_url(
+            redis_url or 'redis://localhost:6379'
+        )
+
     app.config['SESSION_TYPE'] = 'redis'
     app.config['SESSION_PERMANENT'] = True
     app.config['SESSION_USE_SIGNER'] = True
     app.config['SESSION_KEY_PREFIX'] = 'saml_session:'
     app.config['PERMANENT_SESSION_LIFETIME'] = 3600
-    app.config['SESSION_REDIS'] = redis.from_url(
-        os.environ.get('REDIS_URL', 'redis://localhost:6379')
-    )
-
-    # Still need these for the session cookie itself
     app.config['SESSION_COOKIE_SECURE'] = True
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
-    # Initialize Flask-Session
     Session(app)
 
     CORS(app, 
