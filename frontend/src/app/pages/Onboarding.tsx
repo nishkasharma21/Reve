@@ -37,14 +37,41 @@ export function Onboarding() {
 
   const totalSteps = 4;
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < totalSteps - 1) {
       setDirection(1);
       setCurrentStep((s) => s + 1);
     } else {
-      localStorage.setItem('onboardingComplete', 'true');
-      localStorage.setItem('userPreferences', JSON.stringify(data));
-      navigate('/home');
+      // Last step - save to backend
+      await completeOnboarding(data);
+    }
+  };
+
+  const completeOnboarding = async (formData: OnboardingData) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/user/complete-onboarding`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            dorm_location: formData.dorm,  // Note: your state uses 'dorm' not 'dormLocation'
+            topStyle: formData.topStyle,
+            bottomStyle: formData.bottomStyle,
+            height: formData.height,
+            weight: formData.weight,
+          })
+        }
+      );
+      
+      if (response.ok) {
+        navigate('/home');
+      } else {
+        console.error('Failed to complete onboarding');
+      }
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
     }
   };
 

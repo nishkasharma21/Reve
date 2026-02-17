@@ -3,6 +3,8 @@ from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 import json
 import os
+from backend.models import User
+from backend.extensions import db
 
 SAML_DEV_FRONTEND_URL = os.getenv('SAML_DEV_FRONTEND_URL', 'http://localhost:3000')
 SAML_PROD_FRONTEND_URL = os.getenv('SAML_PROD_FRONTEND_URL', 'https://goreve.store/home')
@@ -95,8 +97,20 @@ def saml_acs():
     session['samlNameId'] = auth.get_nameid()
     session['samlSessionIndex'] = auth.get_session_index()
     
-    # Always return a redirect
-    return redirect(SAML_PROD_FRONTEND_URL)
+    email = session['samlNameId']
+    attributes = session['samlUserdata']
+
+    # Store name in session for use during onboarding
+    session['firstName'] = attributes.get('urn:oid:2.5.4.42', [''])[0]
+    session['lastName'] = attributes.get('urn:oid:2.5.4.4', [''])[0]
+
+    # Check if user exists
+    user = User.query.filter_by(email=email).first()
+    
+    if user:
+        return redirect(f"{SAML_PROD_FRONTEND_URL}/home")
+    else:
+        return redirect(f"{SAML_PROD_FRONTEND_URL}/onboard")
     
 
 @saml_bp.route('/login')
