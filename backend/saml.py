@@ -7,7 +7,7 @@ from backend.models import User
 from backend.extensions import db
 
 SAML_DEV_FRONTEND_URL = os.getenv('SAML_DEV_FRONTEND_URL', 'http://localhost:3000')
-SAML_PROD_FRONTEND_URL = os.getenv('SAML_PROD_FRONTEND_URL', 'https://goreve.store/home')
+SAML_PROD_FRONTEND_URL = os.getenv('SAML_PROD_FRONTEND_URL', 'https://goreve.store')
 
 saml_bp = Blueprint('saml', __name__)
 
