@@ -1,8 +1,8 @@
-"""Fresh start with all models
+"""clean baseline
 
-Revision ID: 497ef0a70c9c
+Revision ID: 880d4d340f71
 Revises: 
-Create Date: 2026-02-05 22:56:25.592783
+Create Date: 2026-02-16 22:33:07.599533
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '497ef0a70c9c'
+revision = '880d4d340f71'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -26,6 +26,10 @@ def upgrade():
     sa.Column('profile_pic', sa.String(length=255), nullable=True),
     sa.Column('dorm_location', sa.String(length=100), nullable=True),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
+    sa.Column('topStyle', sa.String(length=100), nullable=True),
+    sa.Column('bottomStyle', sa.String(length=100), nullable=True),
+    sa.Column('height', sa.String(length=50), nullable=True),
+    sa.Column('weight', sa.String(length=50), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
@@ -35,6 +39,12 @@ def upgrade():
     sa.Column('lastName', sa.String(length=100), nullable=False),
     sa.Column('email', sa.String(length=120), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('email')
+    )
+    op.create_table('waitlist_email',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('email', sa.String(length=255), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
@@ -93,6 +103,7 @@ def downgrade():
     op.drop_table('conversations')
     op.drop_table('borrow_requests')
     op.drop_table('items')
+    op.drop_table('waitlist_email')
     op.drop_table('waitlist')
     op.drop_table('users')
     # ### end Alembic commands ###
