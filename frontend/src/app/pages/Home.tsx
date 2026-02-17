@@ -106,7 +106,7 @@ export function Home() {
               </button>
               <button 
                 //onClick={() => window.location.href = 'https://goreve-d2e7c1150e3c.herokuapp.com/saml/logout'} need to change this to use env variable
-                onClick={() => window.location.href = `${import.meta.env.VITE_API_URL}/saml/login`}
+                onClick={() => window.location.href = `${import.meta.env.VITE_API_URL}/saml/logout`}
                 className="px-4 py-2 text-sm font-medium text-white/60 hover:text-white border border-white/10 hover:border-red-500/50 rounded-lg transition-all"
               >
                 Log Out

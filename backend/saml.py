@@ -11,6 +11,19 @@ SAML_PROD_FRONTEND_URL = os.getenv('SAML_PROD_FRONTEND_URL', 'https://goreve.sto
 
 saml_bp = Blueprint('saml', __name__)
 
+def process_saml_login(email, first_name, last_name):
+    """Shared logic used by both real ACS and mock login"""
+    session['samlNameId'] = email
+    session['firstName'] = first_name
+    session['lastName'] = last_name
+    
+    user = User.query.filter_by(email=email).first()
+    
+    if user:
+        return redirect(f"{SAML_PROD_FRONTEND_URL}/home")
+    else:
+        return redirect(f"{SAML_PROD_FRONTEND_URL}/onboard")
+
 def init_saml_auth(req):
     settings_file = os.path.join(os.path.dirname(__file__), '..', 'saml_settings.json')
     
@@ -75,6 +88,7 @@ def saml_metadata():
     
     return Response(metadata_xml, mimetype='application/xml')
 
+
 @saml_bp.route('/acs', methods=['POST'])
 def saml_acs():
     req = prepare_flask_request(request)
@@ -99,20 +113,36 @@ def saml_acs():
     
     email = session['samlNameId']
     attributes = session['samlUserdata']
+    first_name = attributes.get('urn:oid:2.5.4.42', [''])[0]
+    last_name = attributes.get('urn:oid:2.5.4.4', [''])[0]
+    
+    # USE SHARED FUNCTION
+    return process_saml_login(email, first_name, last_name)
 
     # Store name in session for use during onboarding
-    session['firstName'] = attributes.get('urn:oid:2.5.4.42', [''])[0]
-    session['lastName'] = attributes.get('urn:oid:2.5.4.4', [''])[0]
+    # session['firstName'] = attributes.get('urn:oid:2.5.4.42', [''])[0]
+    # session['lastName'] = attributes.get('urn:oid:2.5.4.4', [''])[0]
 
-    # Check if user exists
-    user = User.query.filter_by(email=email).first()
+    # # Check if user exists
+    # user = User.query.filter_by(email=email).first()
     
-    if user:
-        return redirect(f"{SAML_PROD_FRONTEND_URL}/home")
-    else:
-        return redirect(f"{SAML_PROD_FRONTEND_URL}/onboard")
-    
+    # if user:
+    #     return redirect(f"{SAML_PROD_FRONTEND_URL}/home")
+    # else:
+    #     return redirect(f"{SAML_PROD_FRONTEND_URL}/onboard")
 
+@saml_bp.route('/mock-login')
+def mock_login():
+    if not os.getenv('ENABLE_MOCK_LOGIN'):
+        return "Not allowed", 403
+    
+    email = request.args.get('email', 'test@stanford.edu')
+    first_name = request.args.get('firstName', 'Test')
+    last_name = request.args.get('lastName', 'User')
+    
+    # USE SAME LOGIC AS REAL ACS
+    return process_saml_login(email, first_name, last_name)
+    
 @saml_bp.route('/login')
 def saml_login():
     req = prepare_flask_request(request)
