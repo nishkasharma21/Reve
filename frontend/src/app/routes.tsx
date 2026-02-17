@@ -29,19 +29,21 @@ export const router = createBrowserRouter([
   },
   {
     path: '/onboard',
-    element: (
-      <ProtectedRoute>
-        <Onboarding />
-      </ProtectedRoute>
-    ),
+    element: <Onboarding />
+    //element: (
+      //<ProtectedRoute>
+        //<Onboarding />
+      //</ProtectedRoute>
+    //),
   },
   {
     path: '/home',
-    element: (
-      <ProtectedRoute>
-        <Home />
-      </ProtectedRoute>
-    ),
+    element: <Home />
+    //element: (
+      //<ProtectedRoute>
+        //<Home />
+      //</ProtectedRoute>
+    //),
   },
   // {
   //   path: '/profile',
