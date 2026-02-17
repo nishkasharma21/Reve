@@ -18,6 +18,12 @@ class User(db.Model):
     # Timestamp
     created_at = db.Column(db.DateTime, server_default=func.now())
     
+     # Onboarding Fields 
+    topStyle = db.Column(db.String(100), nullable=True)
+    bottomStyle = db.Column(db.String(100), nullable=True)
+    height = db.Column(db.String(50), nullable=True)
+    weight = db.Column(db.String(50), nullable=True)
+    
     # Relationships
     items = db.relationship('Item', backref='owner', lazy=True)
     borrow_requests_sent = db.relationship('BorrowRequest', 
