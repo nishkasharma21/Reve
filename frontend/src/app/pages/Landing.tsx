@@ -82,7 +82,8 @@ export function Landing() {
   }
 
   const handleStanfordLogin = () => {
-    window.location.href = 'https://goreve-d2e7c1150e3c.herokuapp.com/saml/login';
+    //window.location.href = 'https://goreve-d2e7c1150e3c.herokuapp.com/saml/login';
+    window.location.href = `${import.meta.env.VITE_API_URL}/saml/login`;
   };
 
   return (

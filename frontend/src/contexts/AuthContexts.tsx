@@ -14,7 +14,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_BASE = 'https://goreve-d2e7c1150e3c.herokuapp.com';
+//const API_BASE = 'https://goreve-d2e7c1150e3c.herokuapp.com';
+const API_BASE = import.meta.env.VITE_API_URL;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
