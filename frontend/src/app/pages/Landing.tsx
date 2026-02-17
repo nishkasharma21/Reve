@@ -44,7 +44,7 @@ export function Landing() {
     }
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/waitlist`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/waitlist`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
