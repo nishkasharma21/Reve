@@ -4,6 +4,7 @@ import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { useTheme } from '../ThemeContent';
+import { Check, ArrowRight } from "lucide-react";
 
 interface OnboardingData {
   topStyle?: string;
@@ -34,6 +35,7 @@ export function Onboarding() {
   const [direction, setDirection] = useState(1);
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const totalSteps = 4;
 
@@ -66,7 +68,11 @@ export function Onboarding() {
       );
       
       if (response.ok) {
+        setShowSuccess(true);
+        // Redirect after 2 seconds
+        setTimeout(() => {
         navigate('/home');
+      }, 2000);
       } else {
         console.error('Failed to complete onboarding');
       }
@@ -90,7 +96,48 @@ export function Onboarding() {
     exit: (d: number) => ({ x: d > 0 ? -300 : 300, opacity: 0 }),
   };
 
+  if (showSuccess) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center relative overflow-hidden">
+        
+        <div className="absolute inset-0">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 
+                          w-[500px] h-[500px] bg-[#ff00ff] rounded-full 
+                          opacity-20 blur-[100px] animate-pulse" />
+
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 
+                          w-[300px] h-[300px] bg-[#00d4ff] rounded-full 
+                          opacity-20 blur-[80px] animate-pulse"
+               style={{ animationDelay: '0.5s' }} />
+        </div>
+
+        <div className="relative z-10 text-center p-8">
+          <div className="w-24 h-24 mx-auto mb-8 rounded-full 
+                          bg-gradient-to-br from-[#ff00ff] to-[#00d4ff] 
+                          flex items-center justify-center 
+                          shadow-[0_0_50px_rgba(255,0,255,0.5)]">
+            <Check className="text-white w-12 h-12" strokeWidth={3} />
+          </div>
+          
+          <h2 className="text-5xl font-black mb-4 tracking-tighter text-white">
+            YOU'RE IN
+          </h2>
+          
+          <p className="text-xl text-white/80 mb-8 font-medium">
+            Welcome to REVE. Redirecting you now...
+          </p>
+
+          <div className="flex items-center justify-center gap-2 text-[#ff00ff] animate-pulse">
+            <span className="font-bold">ENTERING REVE</span>
+            <ArrowRight size={20} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
+    
     <div className={`min-h-screen flex flex-col h-screen overflow-hidden transition-colors duration-300 ${
       isDark ? 'bg-[#0a0a1f] text-white' : 'bg-gray-50 text-gray-900'
     }`}>
