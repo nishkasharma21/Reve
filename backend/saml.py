@@ -113,6 +113,8 @@ def saml_acs():
     
     email = session['samlNameId']
     attributes = session['samlUserdata']
+    print(attributes.keys())
+
     first_name = attributes.get('urn:oid:2.5.4.42', [''])[0]
     last_name = attributes.get('urn:oid:2.5.4.4', [''])[0]
     
