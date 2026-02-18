@@ -111,12 +111,12 @@ def saml_acs():
     session['samlNameId'] = auth.get_nameid()
     session['samlSessionIndex'] = auth.get_session_index()
     
-    email = session['samlNameId']
     attributes = session['samlUserdata']
     print(attributes.keys())
 
     first_name = attributes.get('urn:oid:2.5.4.42', [''])[0]
     last_name = attributes.get('urn:oid:2.5.4.4', [''])[0]
+    email = attributes.get('urn:oid:0.9.2342.19200300.100.1.3', [''])[0]
     
     # USE SHARED FUNCTION
     return process_saml_login(email, first_name, last_name)
