@@ -11,11 +11,14 @@ def complete_onboarding():
     first_name = session.get('firstName')
     last_name = session.get('lastName')
     
+    print(f"DEBUG: email={email}, firstName={first_name}, lastName={last_name}")  # ADD THIS
+
     if not email:
         return jsonify({'error': 'Not authenticated'}), 401
     
     data = request.get_json()
-    
+    print(f"DEBUG: received data={data}")  # ADD THIS
+
     try:
         new_user = User(
             email=email,
@@ -34,6 +37,9 @@ def complete_onboarding():
         return jsonify({'success': True}), 200
     
     except Exception as e:
+        print(f"ERROR: {type(e).__name__}: {str(e)}")  # ADD THIS
+        import traceback
+        print(traceback.format_exc())  # ADD THIS - prints full stack trace
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
         
