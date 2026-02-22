@@ -75,8 +75,6 @@ export function Profile() {
   const savedItems: any[] = []; // Set to empty until backend feature is ready
   
   const STATUS_FILTERS = ['all', 'pending', 'approved', 'rejected', 'completed', 'cancelled'];
-  const [activeTab, setActiveTab] = useState("listed");
-  const [user, setUser] = useState<UserProfile | null>(null);
   const [requests, setRequests] = useState<Requests>({ incoming: [], outgoing: [] });
   const [requestView, setRequestView] = useState<'incoming' | 'outgoing'>('incoming');
   const [statusFilter, setStatusFilter] = useState('all');
