@@ -1,6 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
-import { mockItems } from "../data/mockData";
 import { Button } from "../components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Checkbox } from "../components/ui/checkbox";
@@ -35,66 +34,65 @@ export function Browse() {
   const [sortBy, setSortBy] = useState("newest");
   const [showFilters, setShowFilters] = useState(false);
 
-  const filteredItems = useMemo(() => {
-    let filtered = [...mockItems];
+  const [items, setItems] = useState<any[]>([]);
+  const [loadingItems, setLoadingItems] = useState(true);
 
-    // Filter by category
-    if (category && category !== "all") {
-      const categorySlug = category.toLowerCase().replace(/-/g, " ");
-      filtered = filtered.filter(
-        (item) => item.category.toLowerCase() === categorySlug.replace("new arrivals", "new-arrivals")
-      );
-    }
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/items`, {
+          credentials: 'include',
+        });
+        const data = await response.json();
+        setItems(data);
+      } catch (err) {
+        console.error('Failed to fetch items:', err);
+      } finally {
+        setLoadingItems(false);
+      }
+    };
+    fetchItems();
+  }, []);
 
-    // Filter by search
-    if (searchQuery) {
-      filtered = filtered.filter((item) =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
+const filteredItems = useMemo(() => {
+  let filtered = [...items];
 
-    // Filter by size
-    if (selectedSizes.length > 0) {
-      filtered = filtered.filter((item) => selectedSizes.includes(item.size));
-    }
+  if (category && category !== "all") {
+    const categorySlug = category.toLowerCase().replace(/-/g, " ");
+    filtered = filtered.filter(
+      (item) => item.category.toLowerCase() === categorySlug
+    );
+  }
 
-    // Filter by condition
-    if (selectedConditions.length > 0) {
-      filtered = filtered.filter((item) =>
-        selectedConditions.includes(item.condition)
-      );
-    }
+  if (searchQuery) {
+    filtered = filtered.filter((item) =>
+      item.item_name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }
 
-    // Filter by university
-    if (selectedUniversity !== "All") {
-      filtered = filtered.filter(
-        (item) => item.university === selectedUniversity
-      );
-    }
+  if (selectedSizes.length > 0) {
+    filtered = filtered.filter((item) => selectedSizes.includes(item.size));
+  }
 
-    // Sort
-    switch (sortBy) {
-      case "price-low":
-        filtered.sort((a, b) => a.price - b.price);
-        break;
-      case "price-high":
-        filtered.sort((a, b) => b.price - a.price);
-        break;
-      case "newest":
-      default:
-        // Already in newest order
-        break;
-    }
+  if (selectedConditions.length > 0) {
+    filtered = filtered.filter((item) =>
+      selectedConditions.includes(item.condition)
+    );
+  }
 
-    return filtered;
-  }, [
-    category,
-    searchQuery,
-    selectedSizes,
-    selectedConditions,
-    selectedUniversity,
-    sortBy,
-  ]);
+  switch (sortBy) {
+    case "price-low":
+      filtered.sort((a, b) => a.price_per_day - b.price_per_day);
+      break;
+    case "price-high":
+      filtered.sort((a, b) => b.price_per_day - a.price_per_day);
+      break;
+    default:
+      break;
+  }
+
+  return filtered;
+}, [items, category, searchQuery, selectedSizes, selectedConditions, sortBy]);
 
   const toggleSize = (size: string) => {
     setSelectedSizes((prev) =>
@@ -266,34 +264,59 @@ export function Browse() {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {filteredItems.map((item) => (
-                <Link
-                  key={item.id}
-                  to={`/item/${item.id}`}
-                  className="group cursor-pointer"
-                >
-                  <div className="aspect-[3/4] bg-white rounded-lg overflow-hidden mb-3 border border-gray-200">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="font-medium group-hover:underline">
-                      {item.name}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      {item.owner} • {item.university}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Size {item.size} • {item.condition}
-                    </p>
-                    <p className="font-bold">${item.price}/day</p>
-                  </div>
-                </Link>
-              ))}
+            <div className="flex-1">
+              {loadingItems ? (
+                <p className="text-gray-500">Loading items...</p>
+              ) : filteredItems.length === 0 ? (
+                <div className="text-center py-20">
+                  <p className="text-xl text-gray-600 mb-4">
+                    No items found matching your criteria
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedSizes([]);
+                      setSelectedConditions([]);
+                      setSelectedUniversity("All");
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {filteredItems.map((item) => (
+                    <Link
+                      key={item.id}
+                      to={`/item/${item.id}`}
+                      className="group cursor-pointer"
+                    >
+                      <div className="aspect-[3/4] bg-white rounded-lg overflow-hidden mb-3 border border-gray-200">
+                        {item.images?.[0] ? (
+                          <img
+                            src={item.images[0]}
+                            alt={item.item_name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
+                            No image
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        <h3 className="font-medium group-hover:underline">
+                          {item.item_name}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          Size {item.size} • {item.condition}
+                        </p>
+                        <p className="font-bold">${item.price_per_day}/day</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

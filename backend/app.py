@@ -101,10 +101,22 @@ def create_app():
             print(f"Error creating item: {str(e)}")
             return jsonify({"error": "Could not create item. Check all fields."}), 400
         
-    @app.after_request
-    def debug_cors(response):
-        print(f"[CORS] {request.method} {request.path} → {response.headers.get('Access-Control-Allow-Origin')}")
-        return response
+    @app.route('/api/items', methods=['GET'])
+    def get_items():
+        items = Item.query.filter_by(available=True).order_by(Item.created_at.desc()).all()
+        return jsonify([{
+            "id": item.id,
+            "item_name": item.item_name,
+            "description": item.description,
+            "category": item.category,
+            "size": item.size,
+            "brand": item.brand,
+            "condition": item.condition,
+            "price_per_day": item.price_per_day,
+            "images": item.images,
+            "available": item.available,
+            "created_at": item.created_at.isoformat()
+        } for item in items])
 
     return app
 
