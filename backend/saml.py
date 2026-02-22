@@ -154,6 +154,9 @@ def mock_login():
     session['samlNameId'] = email
     session['samlSessionIndex'] = 'mock-session'
     
+    session['samlNameId'] = email
+    session['samlSessionIndex'] = 'mock-session'
+    
     # USE SAME LOGIC AS REAL ACS
     return process_saml_login(email, first_name, last_name)
     
