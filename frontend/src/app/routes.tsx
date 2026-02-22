@@ -48,8 +48,8 @@ export const router = createBrowserRouter([
   },
   // Routes WITH Navigation (wrapped by Layout)
   {
-    // element: <ProtectedLayout />,
-    element: <Layout />,
+    element: <ProtectedLayout />,
+    // element: <Layout />,
     children: [
       {
         path: '/home',
