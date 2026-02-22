@@ -83,6 +83,10 @@ class BorrowRequest(db.Model):
     # Timestamp
     created_at = db.Column(db.DateTime, server_default=func.now())
 
+    #Relationships
+    borrower = db.relationship('User', foreign_keys=[borrower_id])
+    item = db.relationship('Item', foreign_keys=[item_id])
+
     def __repr__(self):
         return f'<BorrowRequest {self.id} - {self.status}>'
 

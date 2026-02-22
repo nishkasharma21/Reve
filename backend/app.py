@@ -5,6 +5,7 @@ from backend.saml import saml_bp
 from backend.routes.waitlist import waitlist_bp
 from backend.routes.user import user_bp
 from backend.models import User, Item
+from backend.routes.borrowrequest import borrow_bp
 import os
 
 SAML_PROD_FRONTEND_URL = os.getenv('SAML_PROD_FRONTEND_URL', 'http://localhost:3000')
@@ -41,6 +42,8 @@ def create_app():
     app.register_blueprint(saml_bp, url_prefix="/saml")
     app.register_blueprint(waitlist_bp, url_prefix="/api")
     app.register_blueprint(user_bp, url_prefix="/api/user")
+    app.register_blueprint(borrow_bp, url_prefix='/api')
+
 
     # ── Routes ────────────────────────────────────────────────────────────────
     @app.route("/")
@@ -97,6 +100,28 @@ def create_app():
             db.session.rollback()
             print(f"Error creating item: {str(e)}")
             return jsonify({"error": "Could not create item. Check all fields."}), 400
+        
+    @app.route('/api/items/<int:item_id>', methods=['GET'])
+    def get_item(item_id):
+        item = Item.query.get(item_id)
+        if not item:
+            return jsonify({'error': 'Not found'}), 404
+        
+        owner = User.query.get(item.owner_id)
+        return jsonify({
+            'id': item.id,
+            'item_name': item.item_name,
+            'description': item.description,
+            'category': item.category,
+            'size': item.size,
+            'images': item.images,
+            'available': item.available,
+            'brand': item.brand,
+            'condition': item.condition,
+            'price_per_day': item.price_per_day,
+            'owner_id': item.owner_id,
+            'owner_name': f"{owner.firstName} {owner.lastName}",
+        }), 200
         
     @app.after_request
     def debug_cors(response):
