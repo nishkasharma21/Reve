@@ -145,6 +145,14 @@ def mock_login():
     email = request.args.get('email', 'test@stanford.edu')
     first_name = request.args.get('firstName', 'Test')
     last_name = request.args.get('lastName', 'User')
+
+    session['samlUserdata'] = {
+    'email': [email],
+    'firstName': [first_name],
+    'lastName': [last_name],
+    }
+    session['samlNameId'] = email
+    session['samlSessionIndex'] = 'mock-session'
     
     # USE SAME LOGIC AS REAL ACS
     return process_saml_login(email, first_name, last_name)
