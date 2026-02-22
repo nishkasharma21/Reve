@@ -1,9 +1,10 @@
-from flask import Flask
+from flask import Flask, session, jsonify
 from flask_cors import CORS
 from backend.extensions import db, migrate
 from backend.saml import saml_bp
 from backend.routes.waitlist import waitlist_bp
 from backend.routes.user import user_bp
+from backend.models import User
 import os
 
 SAML_PROD_FRONTEND_URL = os.getenv('SAML_PROD_FRONTEND_URL', 'http://localhost:3000')
@@ -40,6 +41,24 @@ def create_app():
     @app.route("/")
     def home():
         return "Hello, Flask!"
+    
+    @app.route("/api/profile")
+    def get_current_user():
+        user_id = session.get('user_id')
+
+        if not user_id:
+            return jsonify({"error": "Not authenticated"}), 401
+
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        return jsonify({
+            "email": user.email,
+            "firstName": user.first_name,
+            "lastName": user.last_name,
+            "joinDate": user.created_at.isoformat()
+        })
         
     return app
 

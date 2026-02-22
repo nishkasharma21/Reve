@@ -20,6 +20,7 @@ def process_saml_login(email, first_name, last_name):
     user = User.query.filter_by(email=email).first()
     
     if user:
+        session['user_id'] = user.id
         return redirect(f"{SAML_PROD_FRONTEND_URL}/home")
     else:
         return redirect(f"{SAML_PROD_FRONTEND_URL}/onboard")
