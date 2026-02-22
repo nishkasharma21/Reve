@@ -11,15 +11,21 @@ def complete_onboarding():
     first_name = session.get('firstName')
     last_name = session.get('lastName')
     
-    print(f"DEBUG: email={email}, firstName={first_name}, lastName={last_name}")  # ADD THIS
+    print(f"DEBUG: email={email}, firstName={first_name}, lastName={last_name}")
 
     if not email:
         return jsonify({'error': 'Not authenticated'}), 401
     
     data = request.get_json()
-    print(f"DEBUG: received data={data}")  # ADD THIS
+    print(f"DEBUG: received data={data}")
 
     try:
+        # Handle case where user already exists
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            session['user_id'] = existing_user.id
+            return jsonify({'success': True}), 200
+
         new_user = User(
             email=email,
             firstName=first_name,
@@ -33,15 +39,17 @@ def complete_onboarding():
         )
         db.session.add(new_user)
         db.session.commit()
+        session['user_id'] = new_user.id
         
         return jsonify({'success': True}), 200
     
     except Exception as e:
-        print(f"ERROR: {type(e).__name__}: {str(e)}")  # ADD THIS
+        print(f"ERROR: {type(e).__name__}: {str(e)}")
         import traceback
-        print(traceback.format_exc())  # ADD THIS - prints full stack trace
+        print(traceback.format_exc())
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
         
 @user_bp.route('/test-onboarding', methods=['POST'])
 def test_onboarding():
