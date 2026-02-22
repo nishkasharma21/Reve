@@ -42,7 +42,14 @@ export function Profile() {
       .catch(console.error);
   }, []);
 
+
   if (!user) return <div>Loading...</div>;
+
+  const formattedJoinDate = new Date(user.joinDate).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   const listedItems = mockItems.filter((item) => item.owner === user.firstName);
   const savedItems = mockItems.slice(3, 7);
@@ -73,7 +80,7 @@ export function Profile() {
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Clock size={16} className="text-gray-400" />
-                  <span className="text-gray-600">Joined {user.joinDate}</span>
+                  <span className="text-gray-600">Joined {formattedJoinDate}</span>
                 </div>
               </div>
 
