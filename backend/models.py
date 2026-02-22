@@ -44,13 +44,17 @@ class Item(db.Model):
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
     # Item information
-    title = db.Column(db.String(200), nullable=False)
+    item_name = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
-    category = db.Column(db.String(50))  # 'tops', 'bottoms', 'dresses', 'shoes', etc.
-    size = db.Column(db.String(20))      # 'XS', 'S', 'M', 'L', 'XL', etc.
-    images = db.Column(db.JSON)          # Array of image URLs
+    category = db.Column(db.String(50), nullable=False)  # 'tops', 'bottoms', 'dresses', 'shoes', etc.
+    size = db.Column(db.String(20), nullable=False)      # 'XS', 'S', 'M', 'L', 'XL', etc.
+    images = db.Column(db.JSON, nullable=False)          # Array of image URLs
     available = db.Column(db.Boolean, default=True)
-    
+    brand = db.Column(db.String(50))
+    condition = db.Column(db.String(50), nullable=False) # heavily used, mildly used, new
+    price_per_day = db.Column(db.Integer, nullable=False)
+    link = db.Column(db.Text)
+
     # Timestamp
     created_at = db.Column(db.DateTime, server_default=func.now())
     
