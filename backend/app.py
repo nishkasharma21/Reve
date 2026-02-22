@@ -15,25 +15,22 @@ def create_app():
     is_prod = os.environ.get('FLASK_ENV') == 'production'
 
     # ── CORS ──────────────────────────────────────────────────────────────────
-    CORS(app,
-         supports_credentials=True,
-         origins=['http://localhost:5173', 'https://goreve.store'])
+    CORS(app, 
+         supports_credentials=True, 
+         origins=['http://localhost:3000', 'http://localhost:5173', 'https://goreve.store'])
 
-    # ── Session / cookie config ───────────────────────────────────────────────
-    app.config.update(
-        SECRET_KEY=os.environ.get('FLASK_SECRET_KEY') or os.environ.get('SECRET_KEY'),
-        SESSION_COOKIE_HTTPONLY=True,
-        SESSION_COOKIE_SECURE=is_prod,
-        SESSION_COOKIE_SAMESITE='None' if is_prod else 'Lax',
-        SESSION_COOKIE_DOMAIN=None,
-    )
+    # ADD THESE SESSION CONFIGURATIONS
+    app.config['SESSION_COOKIE_SECURE'] = True  # Required for HTTPS
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Critical for cross-origin
+    app.config['SESSION_COOKIE_DOMAIN'] = None  # Let Flask handle it
 
-    # ── Database ──────────────────────────────────────────────────────────────
-    uri = os.environ.get("DATABASE_URL", "sqlite:///app.db")
-    if uri.startswith("postgres://"):
+    app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY') or os.environ.get('SECRET_KEY')
+    uri = os.environ.get("DATABASE_URL")
+    if uri and uri.startswith("postgres://"):
         uri = uri.replace("postgres://", "postgresql://", 1)
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = uri
+    app.config["SQLALCHEMY_DATABASE_URI"] = uri or "sqlite:///app.db"    
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     # ── Extensions ────────────────────────────────────────────────────────────
