@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { Button } from "../components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
@@ -11,17 +11,40 @@ export function Profile() {
   const [activeTab, setActiveTab] = useState("listed");
 
   // Mock user data
-  const user = {
-    name: "Sarah M.",
-    email: "sarah.m@ucla.edu",
-    university: "UCLA",
-    joinDate: "January 2026",
-    itemsListed: 5,
-    itemsRented: 12,
-    rating: 4.8,
-  };
+//   const user = {
+//     name: "Sarah M.",
+//     email: "sarah.m@ucla.edu",
+//     university: "UCLA",
+//     joinDate: "January 2026",
+//     itemsListed: 5,
+//     itemsRented: 12,
+//     rating: 4.8,
+//   };
 
-  const listedItems = mockItems.filter((item) => item.owner === user.name);
+  interface User {
+    firstName: string;
+    lastName: string;
+    email: string;
+    joinDate: string;
+  }
+
+  const [user, setUser] = useState<User | null>(null);
+
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/profile`, { credentials: "include" }) // important to send cookies
+      .then(res => {
+        if (!res.ok) throw new Error("Not authenticated");
+        return res.json();
+      })
+      .then(data => setUser(data))
+      .catch(console.error);
+  }, []);
+
+  if (!user) return <div>Loading...</div>;
+
+  const listedItems = mockItems.filter((item) => item.owner === user.firstName);
   const savedItems = mockItems.slice(3, 7);
   const rentedItems = mockItems.slice(7, 10);
 
@@ -34,12 +57,12 @@ export function Profile() {
             <CardContent className="pt-6">
               <div className="text-center mb-6">
                 <div className="w-24 h-24 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-3xl font-bold">
-                  {user.name.charAt(0)}
+                  {user.firstName.charAt(0)}
                 </div>
-                <h2 className="text-xl font-bold mb-1">{user.name}</h2>
+                <h2 className="text-xl font-bold mb-1">{user.firstName + " " + user.lastName}</h2>
                 <p className="text-sm text-gray-600 flex items-center justify-center gap-1">
                   <MapPin size={14} />
-                  {user.university}
+                  {"Stanford"}
                 </p>
               </div>
 
@@ -57,15 +80,15 @@ export function Profile() {
               <div className="border-t pt-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Items Listed</span>
-                  <span className="font-bold">{user.itemsListed}</span>
+                  <span className="font-bold">{"Temp"}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Items Rented</span>
-                  <span className="font-bold">{user.itemsRented}</span>
+                  <span className="font-bold">{"Temp"}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Rating</span>
-                  <span className="font-bold">⭐ {user.rating}</span>
+                  <span className="font-bold">⭐ {"Temp"}</span>
                 </div>
               </div>
 
