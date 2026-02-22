@@ -67,7 +67,11 @@ export function Profile() {
   }, [API_URL]);
 
   const listedItems = useMemo(() => {
-    return items.filter((item) => item.owner_id === user.id);
+    // Add null/undefined check for user
+    if (!user || !user.id) return [];
+    
+    // Convert both to strings to ensure type match (in case one is number, other is string)
+    return items.filter((item) => String(item.owner_id) === String(user.id));
   }, [items, user]);
   
   const savedItems: any[] = []; // Set to empty until backend feature is ready
