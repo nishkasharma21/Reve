@@ -1,68 +1,88 @@
-import { ReactNode } from 'react';
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import { Landing } from './pages/Landing';
-import { createBrowserRouter } from "react-router-dom";
 import { Onboarding } from './pages/Onboarding';
 import { Home } from './pages/Home';
 import { Profile } from './pages/Profile';
-import { Search } from './pages/Search';
-import { Post } from './pages/Post';
 import { Messages } from './pages/Messages';
 import { NotFound } from './pages/NotFound';
-import { Navigate } from "react-router-dom";
+import { Browse } from './pages/Browse';
+import { ItemDetail } from './pages/ItemDetail';
+import { Upload } from './pages/Upload';
+import { HowItWorks } from './pages/HowItWorks';
+import { Layout } from './Layout';
 import { useAuth } from '../contexts/AuthContexts';
+import { LoadingSpinner } from './components/LoadingSpinner';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <LoadingSpinner />;
   if (!user) return <Navigate to="/" replace />;
 
   return <>{children}</>;
 }
 
+// Protected Layout wrapper that includes Navigation
+function ProtectedLayout() {
+  const { user, loading } = useAuth();
 
+  if (loading) return <LoadingSpinner />;
+  if (!user) return <Navigate to="/" replace />;
+
+  return <Layout />;
+}
 
 export const router = createBrowserRouter([
+  // Routes WITHOUT Navigation
   {
     path: '/',
     Component: Landing,
   },
   {
     path: '/onboard',
-    element: <Onboarding />
-    //element: (
-      //<ProtectedRoute>
-        //<Onboarding />
-      //</ProtectedRoute>
-    //),
+    element: (
+      <ProtectedRoute>
+        <Onboarding />
+      </ProtectedRoute>
+    ),
   },
+  // Routes WITH Navigation (wrapped by Layout)
   {
-    path: '/home',
-    element: <Home />
-    //element: (
-      //<ProtectedRoute>
-        //<Home />
-      //</ProtectedRoute>
-    //),
+    // element: <ProtectedLayout />,
+    element: <Layout />,
+    children: [
+      {
+        path: '/home',
+        Component: Home,
+      },
+      {
+        path: '/profile',
+        Component: Profile,
+      },
+      {
+        path: '/messages/:conversationId?',
+        Component: Messages,
+      },
+      {
+        path: '/browse/:category?',
+        Component: Browse,
+      },
+      {
+        path: '/item/:id',
+        Component: ItemDetail,
+      },
+      {
+        path: '/upload',
+        Component: Upload,
+      },
+      {
+        path: '/how-it-works',
+        Component: HowItWorks,
+      },
+      {
+        path: '*',
+        Component: NotFound,
+      },
+    ],
   },
-  // {
-  //   path: '/profile',
-  //   Component: Profile,
-  // },
-  // {
-  //   path: '/search',
-  //   Component: Search,
-  // },
-  // {
-  //   path: '/post',
-  //   Component: Post,
-  // },
-  // {
-  //   path: '/messages',
-  //   Component: Messages,
-  // },
-  // {
-  //   path: '*',
-  //   Component: NotFound,
-  // },
 ]);

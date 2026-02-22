@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { useTheme } from '../ThemeContent';
 import { Check, ArrowRight } from "lucide-react";
 
 interface OnboardingData {
@@ -33,8 +32,6 @@ export function Onboarding() {
   const [currentStep, setCurrentStep] = useState(0);
   const [data, setData] = useState<OnboardingData>({});
   const [direction, setDirection] = useState(1);
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const [showSuccess, setShowSuccess] = useState(false);
 
   const totalSteps = 4;
@@ -138,17 +135,12 @@ export function Onboarding() {
 
   return (
     
-    <div className={`min-h-screen flex flex-col h-screen overflow-hidden transition-colors duration-300 ${
-      isDark ? 'bg-[#0a0a1f] text-white' : 'bg-gray-50 text-gray-900'
+    <div className={`min-h-screen flex flex-col h-screen overflow-hidden transition-colors duration-300 bg-gray-50 text-gray-900'
     }`}>
       {/* Header with Progress */}
       <div className="w-full px-4 sm:px-6 py-4 flex-shrink-0">
         <div className="max-w-3xl mx-auto">
-          <div className={`text-2xl sm:text-3xl font-black mb-4 sm:mb-6 ${
-            isDark 
-              ? 'bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 text-transparent bg-clip-text' 
-              : 'text-purple-600'
-          }`}>
+          <div className={'text-2xl sm:text-3xl font-black mb-4 sm:mb-6 text-purple-600'}>
             REVE
           </div>
           
@@ -161,13 +153,13 @@ export function Onboarding() {
                     ? 'bg-gradient-to-r from-purple-500 to-pink-500'
                     : index < currentStep
                     ? 'bg-purple-500/50'
-                    : isDark ? 'bg-white/10' : 'bg-gray-200'
+                    : 'bg-gray-200'
                 }`}
               />
             ))}
           </div>
           
-          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+          <p className={`text-sm text-gray-500`}>
             Step {currentStep + 1} of {totalSteps}
           </p>
         </div>
@@ -192,7 +184,7 @@ export function Onboarding() {
                   <div className="space-y-4 sm:space-y-6">
                     <div className="text-center space-y-1 sm:space-y-2">
                       <h2 className="text-2xl sm:text-3xl md:text-4xl font-black">Choose your top style</h2>
-                      <p className={`text-sm sm:text-base ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Select all that match your vibe</p>
+                      <p className={`text-sm sm:text-base text-gray-500`}>Select all that match your vibe</p>
                     </div>
                     
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
@@ -203,7 +195,7 @@ export function Onboarding() {
                           className={`relative h-64 sm:h-72 lg:h-96 xl:h-[28rem] rounded-xl sm:rounded-2xl overflow-hidden group transition-all duration-300 ${
                             data.topStyle === style.id
                               ? 'ring-2 sm:ring-4 ring-purple-500'
-                              : isDark ? 'hover:ring-2 hover:ring-white/30' : 'hover:ring-2 hover:ring-gray-300'
+                              : 'hover:ring-2 hover:ring-gray-300'
                           }`}
                         >
                           <ImageWithFallback src={style.image} alt={style.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -227,7 +219,7 @@ export function Onboarding() {
                   <div className="space-y-4 sm:space-y-6">
                     <div className="text-center space-y-1 sm:space-y-2">
                       <h2 className="text-2xl sm:text-3xl md:text-4xl font-black">Choose your bottom style</h2>
-                      <p className={`text-sm sm:text-base ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>What do you usually wear?</p>
+                      <p className={`text-sm sm:text-base text-gray-500`}>What do you usually wear?</p>
                     </div>
                     
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
@@ -238,7 +230,7 @@ export function Onboarding() {
                           className={`relative aspect-[3/4] rounded-xl sm:rounded-2xl overflow-hidden group transition-all duration-300 ${
                             data.bottomStyle === style.id
                               ? 'ring-2 sm:ring-4 ring-pink-500'
-                              : isDark ? 'hover:ring-2 hover:ring-white/30' : 'hover:ring-2 hover:ring-gray-300'
+                              : 'hover:ring-2 hover:ring-gray-300'
                           }`}
                         >
                           <ImageWithFallback src={style.image} alt={style.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -262,12 +254,12 @@ export function Onboarding() {
                   <div className="space-y-6 sm:space-y-8 max-w-md mx-auto">
                     <div className="text-center space-y-2">
                       <h2 className="text-2xl sm:text-3xl md:text-4xl font-black">Your measurements</h2>
-                      <p className={`text-sm sm:text-base ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>This helps us find the perfect fit</p>
+                      <p className={`text-sm sm:text-base text-gray-500`}>This helps us find the perfect fit</p>
                     </div>
                     <div className="space-y-4">
                       {['height', 'weight'].map((field) => (
                         <div key={field}>
-                          <label className={`block text-sm font-semibold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                          <label className={`block text-sm font-semibold mb-2 text-gray-700`}>
                             {field.charAt(0).toUpperCase() + field.slice(1)} 
                           </label>
                           <input
@@ -275,9 +267,7 @@ export function Onboarding() {
                             placeholder={field === 'height' ? 'e.g., 5`6' : 'e.g., 130 lbs'}
                             value={(data as any)[field] || ''}
                             onChange={(e) => setData({ ...data, [field]: e.target.value })}
-                            className={`w-full px-4 sm:px-5 py-3 border rounded-xl transition-colors focus:outline-none focus:border-purple-400 ${
-                              isDark ? 'bg-white/5 border-white/10 text-white placeholder:text-gray-500' : 'bg-white border-gray-200 text-gray-900 placeholder:text-gray-400'
-                            }`}
+                            className={`w-full px-4 sm:px-5 py-3 border rounded-xl transition-colors focus:outline-none focus:border-purple-400 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400`}
                           />
                         </div>
                       ))}
@@ -290,18 +280,16 @@ export function Onboarding() {
                   <div className="space-y-6 sm:space-y-8 max-w-md mx-auto">
                     <div className="text-center space-y-2">
                       <h2 className="text-2xl sm:text-3xl md:text-4xl font-black">Where do you live?</h2>
-                      <p className={`text-sm sm:text-base ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Find borrowers near you</p>
+                      <p className={`text-sm sm:text-base text-gray-500`}>Find borrowers near you</p>
                     </div>
                     <div>
-                      <label className={`block text-sm font-semibold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Dorm name </label>
+                      <label className={`block text-sm font-semibold mb-2 text-gray-700`}>Dorm name </label>
                       <input
                         type="text"
                         placeholder="e.g., Roble Hall"
                         value={data.dorm || ''}
                         onChange={(e) => setData({ ...data, dorm: e.target.value })}
-                        className={`w-full px-4 sm:px-5 py-3 border rounded-xl transition-colors focus:outline-none focus:border-purple-400 ${
-                          isDark ? 'bg-white/5 border-white/10 text-white placeholder:text-gray-500' : 'bg-white border-gray-200 text-gray-900 placeholder:text-gray-400'
-                        }`}
+                        className={`w-full px-4 sm:px-5 py-3 border rounded-xl transition-colors focus:outline-none focus:border-purple-400 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400`}
                       />
                     </div>
                   </div>
@@ -313,21 +301,19 @@ export function Onboarding() {
       </div>
 
       {/* Navigation Footer */}
-      <div className={`fixed bottom-0 left-0 right-0 backdrop-blur-md border-t p-4 sm:p-6 flex-shrink-0 z-10 transition-colors ${
-        isDark ? 'bg-[#0a0a1f]/95 border-white/5' : 'bg-white/95 border-gray-200'
-      }`}>
+      <div className={`fixed bottom-0 left-0 right-0 backdrop-blur-md border-t p-4 sm:p-6 flex-shrink-0 z-10 transition-colors bg-white/95 border-gray-200`}>
         <div className="max-w-3xl mx-auto flex items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={handleBack}
               disabled={currentStep === 0}
               className={`p-2 sm:p-3 rounded-xl transition-all ${
-                currentStep === 0 ? 'opacity-0 pointer-events-none' : isDark ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'
+                currentStep === 0 ? 'opacity-0 pointer-events-none' : 'bg-gray-100 hover:bg-gray-200'
               }`}
             >
               <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
-            <button onClick={handleSkip} className={`px-4 sm:px-6 py-2 sm:py-3 text-sm transition-colors ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}>
+            <button onClick={handleSkip} className={`px-4 sm:px-6 py-2 sm:py-3 text-sm transition-colors text-gray-500 hover:text-gray-900`}>
               Skip
             </button>
           </div>
