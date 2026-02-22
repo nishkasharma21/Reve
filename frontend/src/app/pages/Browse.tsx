@@ -57,7 +57,13 @@ export function Browse() {
 const filteredItems = useMemo(() => {
   let filtered = [...items];
 
-  if (category && category !== "all") {
+  if (category === "new-arrivals") {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    filtered = filtered.filter(
+      (item) => new Date(item.created_at) > oneWeekAgo
+    );
+  } else if (category && category !== "all") {
     const categorySlug = category.toLowerCase().replace(/-/g, " ");
     filtered = filtered.filter(
       (item) => item.category.toLowerCase() === categorySlug
