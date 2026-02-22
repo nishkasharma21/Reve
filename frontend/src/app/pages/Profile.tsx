@@ -1,257 +1,259 @@
-import { MessageCircle, Heart, Bookmark, Star, Home, Search, Sparkles, User as UserIcon } from 'lucide-react';
-import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useState } from "react";
+import { Link } from "react-router";
+import { Button } from "../components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { User, MapPin, Mail, Edit, Package, Heart, Clock } from "lucide-react";
+import { mockItems } from "../data/mockData";
 
 export function Profile() {
-  const [activeTab, setActiveTab] = useState<'outfits' | 'wardrobe' | 'saved'>('outfits');
-  const [isFollowing, setIsFollowing] = useState(false);
-  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("listed");
 
-  // Mock data
-  const mockOutfitPosts = [
-    { id: 1, likes: 834, comments: 52, caption: 'rave szn is back 💜✨', taggedItems: 3 },
-    { id: 2, likes: 612, comments: 38, caption: 'neon nights 🌙', taggedItems: 2 },
-    { id: 3, likes: 1205, comments: 89, caption: 'festival ready 🎪', taggedItems: 4 },
-    { id: 4, likes: 421, comments: 27, caption: 'vibing hard tonight', taggedItems: 3 },
-    { id: 5, likes: 756, comments: 45, caption: 'party mode activated', taggedItems: 5 },
-    { id: 6, likes: 589, comments: 32, caption: 'electric energy', taggedItems: 2 },
-  ];
+  // Mock user data
+  const user = {
+    name: "Sarah M.",
+    email: "sarah.m@ucla.edu",
+    university: "UCLA",
+    joinDate: "January 2026",
+    itemsListed: 5,
+    itemsRented: 12,
+    rating: 4.8,
+  };
 
-  const mockWardrobeItems = [
-    { id: 1, name: 'Chrome Mini Dress', brand: 'Edikted', size: 'M', price: '$12/day', available: true },
-    { id: 2, name: 'Neon Mesh Top', brand: 'Princess Polly', size: 'S', price: '$8/day', available: true },
-    { id: 3, name: 'Holographic Skirt', brand: 'White Fox', size: 'L', price: '$10/day', available: false },
-    { id: 4, name: 'Oversized Puffer', brand: 'Edikted', size: 'M', price: '$15/day', available: true },
-    { id: 5, name: 'Sequin Bodysuit', brand: 'Princess Polly', size: 'S', price: '$9/day', available: true },
-    { id: 6, name: 'Platform Boots', brand: 'White Fox', size: '8', price: '$14/day', available: true },
-  ];
+  const listedItems = mockItems.filter((item) => item.owner === user.name);
+  const savedItems = mockItems.slice(3, 7);
+  const rentedItems = mockItems.slice(7, 10);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] pb-20 relative">
-      {/* Subtle background glow */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#ff00ff] rounded-full opacity-5 blur-[100px]" />
-        <div className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-[#00d4ff] rounded-full opacity-5 blur-[100px]" />
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Sidebar */}
+        <aside className="lg:col-span-1">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center mb-6">
+                <div className="w-24 h-24 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-3xl font-bold">
+                  {user.name.charAt(0)}
+                </div>
+                <h2 className="text-xl font-bold mb-1">{user.name}</h2>
+                <p className="text-sm text-gray-600 flex items-center justify-center gap-1">
+                  <MapPin size={14} />
+                  {user.university}
+                </p>
+              </div>
+
+              <div className="space-y-3 mb-6">
+                <div className="flex items-center gap-2 text-sm">
+                  <Mail size={16} className="text-gray-400" />
+                  <span className="text-gray-600">{user.email}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock size={16} className="text-gray-400" />
+                  <span className="text-gray-600">Joined {user.joinDate}</span>
+                </div>
+              </div>
+
+              <div className="border-t pt-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Items Listed</span>
+                  <span className="font-bold">{user.itemsListed}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Items Rented</span>
+                  <span className="font-bold">{user.itemsRented}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Rating</span>
+                  <span className="font-bold">⭐ {user.rating}</span>
+                </div>
+              </div>
+
+              <Button variant="outline" className="w-full mt-6">
+                <Edit size={16} className="mr-2" />
+                Edit Profile
+              </Button>
+            </CardContent>
+          </Card>
+        </aside>
+
+        {/* Main Content */}
+        <div className="lg:col-span-3">
+          <h1 className="text-4xl font-bold mb-8">My Closet</h1>
+
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-3 mb-8">
+              <TabsTrigger value="listed">
+                <Package size={16} className="mr-2" />
+                Listed ({listedItems.length})
+              </TabsTrigger>
+              <TabsTrigger value="rented">
+                <User size={16} className="mr-2" />
+                Rented ({rentedItems.length})
+              </TabsTrigger>
+              <TabsTrigger value="saved">
+                <Heart size={16} className="mr-2" />
+                Saved ({savedItems.length})
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Listed Items */}
+            <TabsContent value="listed">
+              {listedItems.length === 0 ? (
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <Package size={48} className="mx-auto text-gray-400 mb-4" />
+                    <h3 className="text-xl font-bold mb-2">No items listed yet</h3>
+                    <p className="text-gray-600 mb-6">
+                      Start earning by listing items from your closet
+                    </p>
+                    <Link to="/upload">
+                      <Button>List Your First Item</Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {listedItems.map((item) => (
+                    <Card key={item.id}>
+                      <CardContent className="p-4">
+                        <div className="flex gap-4">
+                          <div className="w-24 h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <h3 className="font-bold mb-1">{item.name}</h3>
+                                <p className="text-sm text-gray-600">
+                                  Size {item.size}
+                                </p>
+                              </div>
+                              <Badge variant="secondary">Active</Badge>
+                            </div>
+                            <p className="font-bold mb-3">${item.price}/day</p>
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline" className="flex-1">
+                                Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="flex-1"
+                              >
+                                Manage
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Rented Items */}
+            <TabsContent value="rented">
+              {rentedItems.length === 0 ? (
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <User size={48} className="mx-auto text-gray-400 mb-4" />
+                    <h3 className="text-xl font-bold mb-2">No active rentals</h3>
+                    <p className="text-gray-600 mb-6">
+                      Browse items to find your next outfit
+                    </p>
+                    <Link to="/browse">
+                      <Button>Start Browsing</Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {rentedItems.map((item) => (
+                    <Card key={item.id}>
+                      <CardContent className="p-4">
+                        <div className="flex gap-4">
+                          <div className="w-24 h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-bold mb-1">{item.name}</h3>
+                            <p className="text-sm text-gray-600 mb-2">
+                              Rented from {item.owner}
+                            </p>
+                            <Badge className="mb-3">Due: Mar 15, 2026</Badge>
+                            <div className="flex gap-2">
+                              <Button size="sm" className="flex-1">
+                                Contact Owner
+                              </Button>
+                              <Button size="sm" variant="outline" className="flex-1">
+                                Extend Rental
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Saved Items */}
+            <TabsContent value="saved">
+              {savedItems.length === 0 ? (
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <Heart size={48} className="mx-auto text-gray-400 mb-4" />
+                    <h3 className="text-xl font-bold mb-2">No saved items</h3>
+                    <p className="text-gray-600 mb-6">
+                      Save items you love for later
+                    </p>
+                    <Link to="/browse">
+                      <Button>Start Browsing</Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                  {savedItems.map((item) => (
+                    <Link
+                      key={item.id}
+                      to={`/item/${item.id}`}
+                      className="group cursor-pointer"
+                    >
+                      <div className="aspect-[3/4] bg-white rounded-lg overflow-hidden mb-3 border border-gray-200 relative">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <button className="absolute top-2 right-2 bg-white rounded-full p-2 shadow-lg">
+                          <Heart size={16} className="fill-red-500 text-red-500" />
+                        </button>
+                      </div>
+                      <h3 className="font-medium mb-1 group-hover:underline">
+                        {item.name}
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-1">{item.owner}</p>
+                      <p className="font-bold">${item.price}/day</p>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
-
-      {/* Header Section */}
-      <header className="bg-[#1a1a24]/80 backdrop-blur-lg border-b border-white/10 relative z-10">
-        <div className="max-w-6xl mx-auto px-6 py-8">
-          {/* Profile info */}
-          <div className="flex flex-col md:flex-row items-start gap-8 mb-6">
-            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-[#ff00ff] via-[#9d00ff] to-[#00d4ff] p-1">
-              <div className="w-full h-full rounded-full bg-[#1a1a24] flex items-center justify-center">
-                <UserIcon size={48} className="text-white/40" />
-              </div>
-            </div>
-            <div className="flex-1">
-              <h1 className="font-black text-3xl text-white mb-2">luna_vibe</h1>
-              <p className="text-white/70 mb-6 max-w-md">
-                UCLA '26 🎓 Rave fashion obsessed 💜 Sharing my closet with the vibes ✨
-              </p>
-
-              {/* Stats */}
-              <div className="flex gap-8 mb-6">
-                <div>
-                  <div className="font-bold text-2xl text-white">3.8K</div>
-                  <div className="text-sm text-white/50">Followers</div>
-                </div>
-                <div>
-                  <div className="font-bold text-2xl text-white">1.2K</div>
-                  <div className="text-sm text-white/50">Following</div>
-                </div>
-                <div>
-                  <div className="font-bold text-2xl text-white">42</div>
-                  <div className="text-sm text-white/50">Items Listed</div>
-                </div>
-              </div>
-
-              {/* Action buttons */}
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setIsFollowing(!isFollowing)}
-                  className={`flex-1 md:flex-initial px-8 py-3 rounded-xl font-bold transition-all ${
-                    isFollowing
-                      ? 'bg-white/5 border border-white/20 text-white hover:bg-white/10'
-                      : 'bg-gradient-to-r from-[#ff00ff] to-[#9d00ff] text-white shadow-lg shadow-[#ff00ff]/30 hover:shadow-[#ff00ff]/50'
-                  }`}
-                >
-                  {isFollowing ? 'Following' : 'Follow'}
-                </button>
-                <button className="flex-1 md:flex-initial px-8 py-3 bg-white/5 border border-white/20 rounded-xl font-bold text-white hover:bg-white/10 transition-all flex items-center justify-center gap-2">
-                  <MessageCircle size={20} />
-                  Message
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Rating indicator */}
-          <div className="flex items-center gap-3 bg-gradient-to-r from-[#ff00ff]/10 to-[#00d4ff]/10 border border-[#ff00ff]/20 rounded-xl px-5 py-3 w-fit">
-            <Star size={20} className="text-[#ff00ff]" fill="#ff00ff" />
-            <span className="font-bold text-white">4.9</span>
-            <span className="text-sm text-white/60">(127 ratings)</span>
-            <span className="text-sm text-white/40 ml-2">Trusted Lender</span>
-          </div>
-        </div>
-      </header>
-
-      {/* Tabbed Interface */}
-      <div className="sticky top-0 bg-[#1a1a24]/80 backdrop-blur-lg border-b border-white/10 z-30">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="flex">
-            <button
-              onClick={() => setActiveTab('outfits')}
-              className={`flex-1 py-4 font-bold border-b-2 transition-all ${
-                activeTab === 'outfits'
-                  ? 'border-[#ff00ff] text-white'
-                  : 'border-transparent text-white/40 hover:text-white'
-              }`}
-            >
-              Outfits
-            </button>
-            <button
-              onClick={() => setActiveTab('wardrobe')}
-              className={`flex-1 py-4 font-bold border-b-2 transition-all ${
-                activeTab === 'wardrobe'
-                  ? 'border-[#ff00ff] text-white'
-                  : 'border-transparent text-white/40 hover:text-white'
-              }`}
-            >
-              Wardrobe
-            </button>
-            <button
-              onClick={() => setActiveTab('saved')}
-              className={`flex-1 py-4 font-bold border-b-2 transition-all ${
-                activeTab === 'saved'
-                  ? 'border-[#ff00ff] text-white'
-                  : 'border-transparent text-white/40 hover:text-white'
-              }`}
-            >
-              Saved
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Tab Content */}
-      <main className="max-w-6xl mx-auto px-6 py-8 relative z-10">
-        {/* Outfits Tab */}
-        {activeTab === 'outfits' && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {mockOutfitPosts.map((post) => (
-              <div key={post.id} className="relative group cursor-pointer">
-                <div className="aspect-[3/4] bg-[#1a1a24] border border-white/10 rounded-xl overflow-hidden hover:border-[#ff00ff]/50 transition-all">
-                  <div className="w-full h-full flex items-center justify-center bg-[#0a0a0f]">
-                    <div className="w-24 h-32 border-2 border-white/10 rounded-lg" />
-                  </div>
-                  {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#ff00ff]/80 to-[#9d00ff]/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6 text-white">
-                    <div className="flex items-center gap-2">
-                      <Heart size={24} fill="white" />
-                      <span className="font-bold">{post.likes}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MessageCircle size={24} fill="white" />
-                      <span className="font-bold">{post.comments}</span>
-                    </div>
-                  </div>
-                </div>
-                <p className="text-sm text-white/80 mt-2 line-clamp-1">{post.caption}</p>
-                <p className="text-xs text-white/40">🏷️ {post.taggedItems} items</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Wardrobe Tab */}
-        {activeTab === 'wardrobe' && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {mockWardrobeItems.map((item) => (
-              <div key={item.id} className="bg-[#1a1a24] border border-white/10 rounded-xl overflow-hidden cursor-pointer hover:border-[#ff00ff]/50 hover:shadow-lg hover:shadow-[#ff00ff]/20 transition-all">
-                <div className="aspect-[3/4] bg-[#0a0a0f] flex items-center justify-center relative">
-                  <div className="w-20 h-28 border-2 border-white/10 rounded-lg" />
-                  {/* Availability badge */}
-                  <div
-                    className={`absolute top-3 right-3 px-3 py-1.5 rounded-full text-xs font-bold ${
-                      item.available
-                        ? 'bg-gradient-to-r from-[#00d4ff] to-[#00ffff] text-black'
-                        : 'bg-white/10 text-white/60 border border-white/20'
-                    }`}
-                  >
-                    {item.available ? 'Available' : 'Borrowed'}
-                  </div>
-                </div>
-                <div className="p-3 space-y-2">
-                  <h3 className="font-bold text-sm text-white line-clamp-1">
-                    {item.name}
-                  </h3>
-                  <p className="text-xs text-white/60">{item.brand}</p>
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-xs text-white/50">Size {item.size}</span>
-                    <span className="font-bold text-sm text-[#00d4ff]">{item.price}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Saved Tab */}
-        {activeTab === 'saved' && (
-          <div className="space-y-8">
-            <div>
-              <h3 className="text-xl font-bold text-white mb-4">Saved Outfits</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {[1, 2, 3, 4].map((item) => (
-                  <div key={item} className="aspect-[3/4] bg-[#1a1a24] border border-white/10 rounded-xl flex items-center justify-center hover:border-[#ff00ff]/50 transition-all cursor-pointer">
-                    <div className="w-20 h-28 border-2 border-white/10 rounded-lg" />
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white mb-4">Saved Items</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
-                  <div key={item} className="aspect-[3/4] bg-[#1a1a24] border border-white/10 rounded-xl flex items-center justify-center hover:border-[#ff00ff]/50 transition-all cursor-pointer">
-                    <div className="w-20 h-28 border-2 border-white/10 rounded-lg" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </main>
-
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#1a1a24]/95 backdrop-blur-lg border-t border-white/10 z-50">
-        <div className="max-w-screen-xl mx-auto px-6">
-          <div className="flex items-center justify-around h-16">
-            <button onClick={() => navigate('/home')} className="flex flex-col items-center gap-1 text-white/40">
-              <Home size={24} />
-              <span className="text-xs">Home</span>
-            </button>
-            <button onClick={() => navigate('/search')} className="flex flex-col items-center gap-1 text-white/40">
-              <Search size={24} />
-              <span className="text-xs">Search</span>
-            </button>
-            <button className="flex flex-col items-center gap-1 text-white/40">
-              <div className="w-12 h-12 -mt-2 rounded-full bg-gradient-to-br from-[#ff00ff] to-[#9d00ff] flex items-center justify-center shadow-lg shadow-[#ff00ff]/50">
-                <Sparkles size={24} className="text-white" />
-              </div>
-            </button>
-            <button onClick={() => navigate('/messages')} className="flex flex-col items-center gap-1 text-white/40">
-              <MessageCircle size={24} />
-              <span className="text-xs">Messages</span>
-            </button>
-            <button onClick={() => navigate('/profile')} className="flex flex-col items-center gap-1 text-[#ff00ff]">
-              <UserIcon size={24} />
-              <span className="text-xs">Profile</span>
-            </button>
-          </div>
-        </div>
-      </nav>
     </div>
   );
 }
