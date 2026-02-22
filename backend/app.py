@@ -15,18 +15,23 @@ def create_app():
     is_prod = os.environ.get('FLASK_ENV') == 'production'
 
     # ── CORS ──────────────────────────────────────────────────────────────────
-    CORS(app,
-         supports_credentials=True,
-         origins=['http://localhost:5173', 'https://goreve.store'])
+    CORS(app, 
+        supports_credentials=True, 
+        origins=['http://localhost:3000', 'http://localhost:5173', 'https://goreve.store'])
 
-    # ── Session / cookie config ───────────────────────────────────────────────
-    app.config.update(
-        SECRET_KEY=os.environ.get('FLASK_SECRET_KEY') or os.environ.get('SECRET_KEY'),
-        SESSION_COOKIE_HTTPONLY=True,
-        SESSION_COOKIE_SECURE=is_prod,
-        SESSION_COOKIE_SAMESITE='None' if is_prod else 'Lax',
-        SESSION_COOKIE_DOMAIN=None,
-    )
+    # ADD THESE SESSION CONFIGURATIONS
+    app.config['SESSION_COOKIE_SECURE'] = True # Required for HTTPS
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'None' # Critical for cross-origin
+    app.config['SESSION_COOKIE_DOMAIN'] = None # Let Flask handle it
+
+    app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY') or os.environ.get('SECRET_KEY')
+    uri = os.environ.get("DATABASE_URL")
+    if uri and uri.startswith("postgres://"):
+        uri = uri.replace("postgres://", "postgresql://", 1)
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = uri or "sqlite:///app.db"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     # ── Database ──────────────────────────────────────────────────────────────
     uri = os.environ.get("DATABASE_URL", "sqlite:///app.db")
@@ -70,6 +75,24 @@ def create_app():
 
     @app.route('/api/items', methods=['POST'])
     def create_item():
+        # GET
+        if request.method == 'GET':
+            items = Item.query.filter_by(available=True).order_by(Item.created_at.desc()).all()
+            return jsonify([{
+                "id": item.id,
+                "item_name": item.item_name,
+                "description": item.description,
+                "category": item.category,
+                "size": item.size,
+                "brand": item.brand,
+                "condition": item.condition,
+                "price_per_day": item.price_per_day,
+                "images": item.images,
+                "available": item.available,
+                "created_at": item.created_at.isoformat()
+            } for item in items])
+
+        # POST
         user_id = session.get('user_id')
         if not user_id:
             return jsonify({"error": "You must be logged in to list an item"}), 401
@@ -100,23 +123,6 @@ def create_app():
             db.session.rollback()
             print(f"Error creating item: {str(e)}")
             return jsonify({"error": "Could not create item. Check all fields."}), 400
-        
-    @app.route('/api/items', methods=['GET'])
-    def get_items():
-        items = Item.query.filter_by(available=True).order_by(Item.created_at.desc()).all()
-        return jsonify([{
-            "id": item.id,
-            "item_name": item.item_name,
-            "description": item.description,
-            "category": item.category,
-            "size": item.size,
-            "brand": item.brand,
-            "condition": item.condition,
-            "price_per_day": item.price_per_day,
-            "images": item.images,
-            "available": item.available,
-            "created_at": item.created_at.isoformat()
-        } for item in items])
 
     return app
 
