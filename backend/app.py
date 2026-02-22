@@ -73,7 +73,7 @@ def create_app():
             "joinDate": user.created_at.isoformat()
         })
 
-    @app.route('/api/items', methods=['POST'])
+    @app.route('/api/items', methods=['POST', 'GET'])
     def create_item():
         # GET
         if request.method == 'GET':
