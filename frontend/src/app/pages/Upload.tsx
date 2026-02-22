@@ -9,16 +9,17 @@ import { Upload as UploadIcon, X, CheckCircle } from "lucide-react";
 export function Upload() {
   const [images, setImages] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false); // Track loading state
   const [formData, setFormData] = useState({
-    name: "",
+    item_name: "",
     category: "",
     brand: "",
     size: "",
     condition: "",
-    price: "",
+    price_per_day: "",
     description: "",
-    availableFrom: "",
-    availableTo: "",
+    link: "",
+    images: [], // Ensure this is initialized as an empty array
   });
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,11 +36,22 @@ export function Upload() {
     setImages(images.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitted(true);
-    // In real app, this would upload to backend
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/items`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(formData),
+    credentials: 'include', // CRITICAL: Sends the session cookie to the backend
+  });
+  
+  const result = await response.json();
+  console.log(result);
+};
 
   if (submitted) {
     return (
@@ -112,9 +124,9 @@ export function Upload() {
             <Label htmlFor="name">Item Name *</Label>
             <Input
               id="name"
-              value={formData.name}
+              value={formData.item_name}
               onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
+                setFormData({ ...formData, item_name: e.target.value })
               }
               placeholder="e.g., Black Mini Dress"
               required
@@ -209,9 +221,9 @@ export function Upload() {
             <Input
               id="price"
               type="number"
-              value={formData.price}
+              value={formData.price_per_day}
               onChange={(e) =>
-                setFormData({ ...formData, price: e.target.value })
+                setFormData({ ...formData, price_per_day: e.target.value })
               }
               placeholder="10"
               min="1"
@@ -234,34 +246,6 @@ export function Upload() {
               rows={4}
               required
             />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <Label htmlFor="availableFrom">Available From *</Label>
-              <Input
-                id="availableFrom"
-                type="date"
-                value={formData.availableFrom}
-                onChange={(e) =>
-                  setFormData({ ...formData, availableFrom: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="availableTo">Available To *</Label>
-              <Input
-                id="availableTo"
-                type="date"
-                value={formData.availableTo}
-                onChange={(e) =>
-                  setFormData({ ...formData, availableTo: e.target.value })
-                }
-                required
-              />
-            </div>
           </div>
         </div>
 
