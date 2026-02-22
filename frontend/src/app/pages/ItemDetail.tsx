@@ -151,10 +151,10 @@ export function ItemDetail() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="justify-start">
-                      <CalendarIcon className="mr-2" size={16} />
+                    <button className="flex items-center gap-2 border rounded-md px-4 py-2 text-sm hover:bg-gray-50 justify-start w-full">
+                      <CalendarIcon size={16} />
                       {startDate ? format(startDate, "MMM dd, yyyy") : "Start Date"}
-                    </Button>
+                    </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar mode="single" selected={startDate} onSelect={setStartDate}
@@ -164,10 +164,10 @@ export function ItemDetail() {
 
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="justify-start">
-                      <CalendarIcon className="mr-2" size={16} />
+                    <button className="flex items-center gap-2 border rounded-md px-4 py-2 text-sm hover:bg-gray-50 justify-start w-full">
+                      <CalendarIcon size={16} />
                       {endDate ? format(endDate, "MMM dd, yyyy") : "End Date"}
-                    </Button>
+                    </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar mode="single" selected={endDate} onSelect={setEndDate}
