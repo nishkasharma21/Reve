@@ -5,6 +5,7 @@ from backend.saml import saml_bp
 from backend.routes.waitlist import waitlist_bp
 from backend.routes.user import user_bp
 from backend.models import User, Item
+from backend.routes.borrowrequest import borrow_bp
 import os
 
 SAML_PROD_FRONTEND_URL = os.getenv('SAML_PROD_FRONTEND_URL', 'http://localhost:3000')
@@ -16,29 +17,21 @@ def create_app():
 
     # ── CORS ──────────────────────────────────────────────────────────────────
     CORS(app, 
-        supports_credentials=True, 
-        origins=['http://localhost:3000', 'http://localhost:5173', 'https://goreve.store'])
+         supports_credentials=True, 
+         origins=['http://localhost:3000', 'http://localhost:5173', 'https://goreve.store'])
 
     # ADD THESE SESSION CONFIGURATIONS
-    app.config['SESSION_COOKIE_SECURE'] = True # Required for HTTPS
+    app.config['SESSION_COOKIE_SECURE'] = True  # Required for HTTPS
     app.config['SESSION_COOKIE_HTTPONLY'] = True
-    app.config['SESSION_COOKIE_SAMESITE'] = 'None' # Critical for cross-origin
-    app.config['SESSION_COOKIE_DOMAIN'] = None # Let Flask handle it
+    app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Critical for cross-origin
+    app.config['SESSION_COOKIE_DOMAIN'] = None  # Let Flask handle it
 
     app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY') or os.environ.get('SECRET_KEY')
     uri = os.environ.get("DATABASE_URL")
     if uri and uri.startswith("postgres://"):
         uri = uri.replace("postgres://", "postgresql://", 1)
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = uri or "sqlite:///app.db"
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-    # ── Database ──────────────────────────────────────────────────────────────
-    uri = os.environ.get("DATABASE_URL", "sqlite:///app.db")
-    if uri.startswith("postgres://"):
-        uri = uri.replace("postgres://", "postgresql://", 1)
-
-    app.config["SQLALCHEMY_DATABASE_URI"] = uri
+    app.config["SQLALCHEMY_DATABASE_URI"] = uri or "sqlite:///app.db"    
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     # ── Extensions ────────────────────────────────────────────────────────────
@@ -49,6 +42,8 @@ def create_app():
     app.register_blueprint(saml_bp, url_prefix="/saml")
     app.register_blueprint(waitlist_bp, url_prefix="/api")
     app.register_blueprint(user_bp, url_prefix="/api/user")
+    app.register_blueprint(borrow_bp, url_prefix='/api')
+
 
     # ── Routes ────────────────────────────────────────────────────────────────
     @app.route("/")
@@ -123,6 +118,33 @@ def create_app():
             db.session.rollback()
             print(f"Error creating item: {str(e)}")
             return jsonify({"error": "Could not create item. Check all fields."}), 400
+        
+    @app.route('/api/items/<int:item_id>', methods=['GET'])
+    def get_item(item_id):
+        item = Item.query.get(item_id)
+        if not item:
+            return jsonify({'error': 'Not found'}), 404
+        
+        owner = User.query.get(item.owner_id)
+        return jsonify({
+            'id': item.id,
+            'item_name': item.item_name,
+            'description': item.description,
+            'category': item.category,
+            'size': item.size,
+            'images': item.images,
+            'available': item.available,
+            'brand': item.brand,
+            'condition': item.condition,
+            'price_per_day': item.price_per_day,
+            'owner_id': item.owner_id,
+            'owner_name': f"{owner.firstName} {owner.lastName}",
+        }), 200
+        
+    @app.after_request
+    def debug_cors(response):
+        print(f"[CORS] {request.method} {request.path} → {response.headers.get('Access-Control-Allow-Origin')}")
+        return response
 
     return app
 
