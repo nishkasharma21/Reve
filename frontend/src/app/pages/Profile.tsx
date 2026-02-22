@@ -57,14 +57,22 @@ export function Profile() {
       .catch(console.error);
   }, []);
 
-  useEffect(() => {
-    if (activeTab === 'requests') {
-      fetch(`${API_URL}/api/borrow-requests`, { credentials: "include" })
-        .then(res => res.json())
-        .then(data => setRequests(data))
-        .catch(console.error);
-    }
-  }, [activeTab]);
+ useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/borrow-requests`, {
+          credentials: "include",
+        });
+        if (!res.ok) throw new Error("Failed to fetch requests");
+        const data = await res.json();
+        setRequests(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchRequests();
+  }, []);
 
   const updateRequestStatus = async (requestId: number, status: string) => {
     try {
@@ -283,11 +291,20 @@ export function Profile() {
                 <Card>
                   <CardContent className="py-12 text-center">
                     <Inbox size={48} className="mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-xl font-bold mb-2">No requests</h3>
+                    <h3 className="text-xl font-bold mb-2 capitalize">
+                      {statusFilter === 'all'
+                        ? 'No requests'
+                        : `No ${statusFilter} requests`}
+                    </h3>
+
                     <p className="text-gray-600">
-                      {requestView === 'incoming'
-                        ? 'No one has requested to borrow your items yet'
-                        : "You haven't sent any borrow requests yet"}
+                      {statusFilter === 'all'
+                        ? (
+                            requestView === 'incoming'
+                              ? 'No one has requested to borrow your items yet'
+                              : "You haven't sent any borrow requests yet"
+                          )
+                        : `You have no ${statusFilter} ${requestView} requests.`}
                     </p>
                   </CardContent>
                 </Card>
