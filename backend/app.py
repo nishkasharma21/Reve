@@ -44,6 +44,7 @@ def create_app():
     
     @app.route("/api/profile")
     def get_current_user():
+        print(f"[DEBUG] session in profile: {dict(session)}")
         user_id = session.get('user_id')
 
         if not user_id:

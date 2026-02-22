@@ -18,9 +18,11 @@ def process_saml_login(email, first_name, last_name):
     session['lastName'] = last_name
     
     user = User.query.filter_by(email=email).first()
+    print(f"[DEBUG] SAML login for {email}, user found: {user}")
     
     if user:
         session['user_id'] = user.id
+        print(f"[DEBUG] session after login: {dict(session)}")
         return redirect(f"{SAML_PROD_FRONTEND_URL}/home")
     else:
         return redirect(f"{SAML_PROD_FRONTEND_URL}/onboard")
