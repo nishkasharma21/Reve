@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router";
 import { Button } from "../components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
@@ -7,45 +7,72 @@ import { Badge } from "../components/ui/badge";
 import { User, MapPin, Mail, Edit, Package, Clock, Inbox } from "lucide-react";
 import { mockItems } from "../data/mockData";
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-interface UserProfile {
-  firstName: string;
-  lastName: string;
-  email: string;
-  joinDate: string;
-}
-
-interface BorrowRequest {
-  id: number;
-  item_id: number;
-  item_name: string;
-  borrower_id: number;
-  borrower_name: string;
-  status: 'pending' | 'approved' | 'rejected' | 'completed' | 'cancelled';
-  start_date: string | null;
-  end_date: string | null;
-  created_at: string;
-}
-
-interface Requests {
-  incoming: BorrowRequest[];
-  outgoing: BorrowRequest[];
-}
-
-const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-  completed: 'bg-blue-100 text-blue-800',
-  cancelled: 'bg-gray-100 text-gray-600',
-};
-
-const STATUS_FILTERS = ['all', 'pending', 'approved', 'rejected', 'completed', 'cancelled'];
-
 export function Profile() {
   const [activeTab, setActiveTab] = useState("listed");
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<any>(null); // Change from User | null
+  const [items, setItems] = useState<any[]>([]); // New state for DB items
+  const [loading, setLoading] = useState(true);
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  interface UserProfile {
+    firstName: string;
+    lastName: string;
+    email: string;
+    joinDate: string;
+  }
+
+  interface BorrowRequest {
+    id: number;
+    item_id: number;
+    item_name: string;
+    borrower_id: number;
+    borrower_name: string;
+    status: 'pending' | 'approved' | 'rejected' | 'completed' | 'cancelled';
+    start_date: string | null;
+    end_date: string | null;
+    created_at: string;
+  }
+
+  interface Requests {
+    incoming: BorrowRequest[];
+    outgoing: BorrowRequest[];
+  }
+
+  const STATUS_COLORS: Record<string, string> = {
+    pending: 'bg-yellow-100 text-yellow-800',
+    approved: 'bg-green-100 text-green-800',
+    rejected: 'bg-red-100 text-red-800',
+    completed: 'bg-blue-100 text-blue-800',
+    cancelled: 'bg-gray-100 text-gray-600',
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const userRes = await fetch(`${API_URL}/api/profile`, { credentials: "include" });
+        if (!userRes.ok) throw new Error("Not authenticated");
+        const userData = await userRes.json();
+        setUser(userData);
+
+        const itemsRes = await fetch(`${API_URL}/api/items`, { credentials: "include" });
+        const itemsData = await itemsRes.json();
+        setItems(itemsData);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [API_URL]);
+
+  const listedItems = useMemo(() => {
+    return items.filter((item) => item.owner_id === user.id);
+  }, [items, user]);
+  
+  const savedItems: any[] = []; // Set to empty until backend feature is ready
+  
+  const STATUS_FILTERS = ['all', 'pending', 'approved', 'rejected', 'completed', 'cancelled'];
   const [requests, setRequests] = useState<Requests>({ incoming: [], outgoing: [] });
   const [requestView, setRequestView] = useState<'incoming' | 'outgoing'>('incoming');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -91,7 +118,6 @@ export function Profile() {
     year: "numeric", month: "long", day: "numeric",
   });
 
-  const listedItems = mockItems.filter((item) => item.owner === user.firstName);
   const rentedItems = mockItems.slice(7, 10);
 
   const displayedRequests = (requestView === 'incoming' ? requests.incoming : requests.outgoing)
@@ -128,7 +154,7 @@ export function Profile() {
               <div className="border-t pt-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Items Listed</span>
-                  <span className="font-bold">Temp</span>
+                  <span className="font-bold">{listedItems.length}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Items Rented</span>
@@ -184,7 +210,11 @@ export function Profile() {
                       <CardContent className="p-4">
                         <div className="flex gap-4">
                           <div className="w-24 h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                            <img
+                              src={item.images?.[0]}
+                              alt={item.item_name}
+                              className="w-full h-full object-cover"
+                            />
                           </div>
                           <div className="flex-1">
                             <div className="flex justify-between items-start mb-2">
@@ -194,7 +224,7 @@ export function Profile() {
                               </div>
                               <Badge variant="secondary">Active</Badge>
                             </div>
-                            <p className="font-bold mb-3">${item.price}/day</p>
+                            <p className="font-bold mb-3">${item.price_per_day}/day</p>
                             <div className="flex gap-2">
                               <Button size="sm" variant="outline" className="flex-1">Edit</Button>
                               <Button size="sm" variant="outline" className="flex-1">Manage</Button>
