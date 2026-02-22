@@ -68,8 +68,26 @@ def create_app():
             "joinDate": user.created_at.isoformat()
         })
 
-    @app.route('/api/items', methods=['POST'])
+    @app.route('/api/items', methods=['POST', 'GET'])
     def create_item():
+        # GET
+        if request.method == 'GET':
+            items = Item.query.filter_by(available=True).order_by(Item.created_at.desc()).all()
+            return jsonify([{
+                "id": item.id,
+                "item_name": item.item_name,
+                "description": item.description,
+                "category": item.category,
+                "size": item.size,
+                "brand": item.brand,
+                "condition": item.condition,
+                "price_per_day": item.price_per_day,
+                "images": item.images,
+                "available": item.available,
+                "created_at": item.created_at.isoformat()
+            } for item in items])
+
+        # POST
         user_id = session.get('user_id')
         if not user_id:
             return jsonify({"error": "You must be logged in to list an item"}), 401

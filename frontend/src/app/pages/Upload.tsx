@@ -7,10 +7,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Upload as UploadIcon, X, CheckCircle } from "lucide-react";
 
 export function Upload() {
+  interface ItemFormData {
+    item_name: string;
+    category: string;
+    brand: string;
+    size: string;
+    condition: string;
+    price_per_day: string;
+    description: string;
+    link: string;
+    images: string[]; // Explicitly allow an array of strings
+  }
+
   const [images, setImages] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false); // Track loading state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ItemFormData>({
     item_name: "",
     category: "",
     brand: "",
@@ -22,13 +34,43 @@ export function Upload() {
     images: [], // Ensure this is initialized as an empty array
   });
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [imageUploading, setImageUploading] = useState(false);
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
-      const newImages = Array.from(files).map((file) =>
-        URL.createObjectURL(file)
-      );
-      setImages([...images, ...newImages]);
+    if (!files) return;
+    
+    setImageUploading(true);
+    const uploadedUrls: string[] = [];
+
+    try {
+      for (const file of Array.from(files)) {
+        const data = new FormData();
+        data.append('file', file);
+        // Double check that 'goreve' is set to "Unsigned" in your Cloudinary Settings
+        data.append('upload_preset', 'goreve'); 
+
+        const res = await fetch(`https://api.cloudinary.com/v1_1/dvwjl1ibc/image/upload`, {
+          method: 'POST',
+          body: data, // Do NOT set Content-Type header; browser sets it for FormData
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          console.error('Cloudinary Error:', errorData);
+          throw new Error('Upload failed');
+        }
+
+        const result = await res.json();
+        uploadedUrls.push(result.secure_url); // Only call this ONCE
+      }
+
+      const allImages = [...images, ...uploadedUrls];
+      setImages(allImages);
+      setFormData(prev => ({ ...prev, images: allImages }));
+    } catch (err) {
+      alert("Failed to upload one or more images.");
+    } finally {
+      setImageUploading(false);
     }
   };
 
@@ -37,21 +79,38 @@ export function Upload() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
-  
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/items`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(formData),
-    credentials: 'include', // CRITICAL: Sends the session cookie to the backend
-  });
-  
-  const result = await response.json();
-  console.log(result);
-};
+    e.preventDefault();
+    setLoading(true);
+
+    const submissionData = {
+      ...formData,
+      price_per_day: parseFloat(formData.price_per_day),
+    };
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/items`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submissionData),
+        credentials: 'include',
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setSubmitted(true); 
+      } else {
+        alert(result.error || 'Something went wrong. Please try again.');
+      }
+    } catch (err) {
+      console.error('Submit failed:', err);
+      alert('Failed to submit. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (submitted) {
     return (
@@ -107,7 +166,9 @@ export function Upload() {
           </div>
           <label className="border-2 border-dashed border-gray-300 rounded-lg p-8 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors">
             <UploadIcon size={48} className="text-gray-400 mb-2" />
-            <span className="text-sm text-gray-600">Click to upload photos</span>
+            <span className="text-sm text-gray-600">
+              {imageUploading ? 'Uploading...' : 'Click to upload photos'}
+            </span>
             <input
               type="file"
               multiple
