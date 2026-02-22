@@ -140,6 +140,30 @@ def create_app():
             'owner_id': item.owner_id,
             'owner_name': f"{owner.firstName} {owner.lastName}",
         }), 200
+    
+    @app.route('/api/my-items', methods=['GET'])
+    def get_my_items():
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({"error": "You must be logged in"}), 401
+        
+        # Get all items where owner_id matches the current user
+        items = Item.query.filter_by(owner_id=user_id).order_by(Item.created_at.desc()).all()
+        
+        return jsonify([{
+            "id": item.id,
+            "owner_id": item.owner_id,
+            "item_name": item.item_name,
+            "description": item.description,
+            "category": item.category,
+            "size": item.size,
+            "brand": item.brand,
+            "condition": item.condition,
+            "price_per_day": item.price_per_day,
+            "images": item.images,
+            "available": item.available,
+            "created_at": item.created_at.isoformat()
+        } for item in items])
         
     @app.after_request
     def debug_cors(response):

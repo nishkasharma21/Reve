@@ -54,7 +54,8 @@ export function Profile() {
         const userData = await userRes.json();
         setUser(userData);
 
-        const itemsRes = await fetch(`${API_URL}/api/items`, { credentials: "include" });
+        // Changed from /api/items to /api/my-items
+        const itemsRes = await fetch(`${API_URL}/api/my-items`, { credentials: "include" });
         const itemsData = await itemsRes.json();
         setItems(itemsData);
       } catch (err) {
@@ -66,13 +67,7 @@ export function Profile() {
     fetchData();
   }, [API_URL]);
 
-  const listedItems = useMemo(() => {
-    // Add null/undefined check for user
-    if (!user || !user.id) return [];
-    
-    // Convert both to strings to ensure type match (in case one is number, other is string)
-    return items.filter((item) => String(item.owner_id) === String(user.id));
-  }, [items, user]);
+  const listedItems = items;
   
   const savedItems: any[] = []; // Set to empty until backend feature is ready
   
