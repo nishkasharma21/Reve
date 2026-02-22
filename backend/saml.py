@@ -138,6 +138,7 @@ def saml_acs():
 
 @saml_bp.route('/mock-login')
 def mock_login():
+    print(f"[DEBUG] ENABLE_MOCK_LOGIN = {os.getenv('ENABLE_MOCK_LOGIN')!r}")
     if not os.getenv('ENABLE_MOCK_LOGIN'):
         return "Not allowed", 403
     
