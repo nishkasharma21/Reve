@@ -56,8 +56,8 @@ def create_app():
 
         return jsonify({
             "email": user.email,
-            "firstName": user.first_name,
-            "lastName": user.last_name,
+            "firstName": user.firstName,
+            "lastName": user.lastName,
             "joinDate": user.created_at.isoformat()
         })
         
