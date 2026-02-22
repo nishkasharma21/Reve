@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router";
 import { Button } from "../components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
@@ -9,6 +9,9 @@ import { mockItems } from "../data/mockData";
 
 export function Profile() {
   const [activeTab, setActiveTab] = useState("listed");
+  const [user, setUser] = useState<any>(null); // Change from User | null
+  const [items, setItems] = useState<any[]>([]); // New state for DB items
+  const [loading, setLoading] = useState(true);
 
   // Mock user data
 //   const user = {
@@ -28,20 +31,33 @@ export function Profile() {
     joinDate: string;
   }
 
-  const [user, setUser] = useState<User | null>(null);
-
   const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-    fetch(`${API_URL}/api/profile`, { credentials: "include" }) // important to send cookies
-      .then(res => {
-        if (!res.ok) throw new Error("Not authenticated");
-        return res.json();
-      })
-      .then(data => setUser(data))
-      .catch(console.error);
-  }, []);
+    const fetchData = async () => {
+      try {
+        const userRes = await fetch(`${API_URL}/api/profile`, { credentials: "include" });
+        if (!userRes.ok) throw new Error("Not authenticated");
+        const userData = await userRes.json();
+        setUser(userData);
 
+        const itemsRes = await fetch(`${API_URL}/api/items`, { credentials: "include" });
+        const itemsData = await itemsRes.json();
+        setItems(itemsData);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [API_URL]);
+
+  const listedItems = useMemo(() => {
+    return items.filter((item) => item.owner_id === user.id);
+  }, [items, user]);
+  const savedItems: any[] = []; // Set to empty until backend feature is ready
+  const rentedItems: any[] = []; // Set to empty until backend feature is ready
 
   if (!user) return <div>Loading...</div>;
 
@@ -50,10 +66,6 @@ export function Profile() {
     month: "long",
     day: "numeric",
   });
-
-  const listedItems = mockItems.filter((item) => item.owner === user.firstName);
-  const savedItems = mockItems.slice(3, 7);
-  const rentedItems = mockItems.slice(7, 10);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -87,7 +99,7 @@ export function Profile() {
               <div className="border-t pt-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Items Listed</span>
-                  <span className="font-bold">{"Temp"}</span>
+                  <span className="font-bold">{listedItems.length}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Items Rented</span>
@@ -150,8 +162,8 @@ export function Profile() {
                         <div className="flex gap-4">
                           <div className="w-24 h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                             <img
-                              src={item.image}
-                              alt={item.name}
+                              src={item.images?.[0]}
+                              alt={item.item_name}
                               className="w-full h-full object-cover"
                             />
                           </div>
@@ -165,7 +177,7 @@ export function Profile() {
                               </div>
                               <Badge variant="secondary">Active</Badge>
                             </div>
-                            <p className="font-bold mb-3">${item.price}/day</p>
+                            <p className="font-bold mb-3">${item.price_per_day}/day</p>
                             <div className="flex gap-2">
                               <Button size="sm" variant="outline" className="flex-1">
                                 Edit
