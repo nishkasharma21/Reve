@@ -83,7 +83,7 @@ export function Profile() {
       .catch(console.error);
   }, []);
 
- useEffect(() => {
+  useEffect(() => {
     const fetchRequests = async () => {
       try {
         const res = await fetch(`${API_URL}/api/borrow-requests`, {
