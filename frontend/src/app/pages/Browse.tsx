@@ -40,7 +40,7 @@ export function Browse() {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/items`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/browse-items`, {
           credentials: 'include',
         });
         const data = await response.json();

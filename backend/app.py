@@ -164,6 +164,35 @@ def create_app():
             "available": item.available,
             "created_at": item.created_at.isoformat()
         } for item in items])
+    
+    @app.route('/api/browse-items', methods=['GET'])
+    def get_browse_items():
+        user_id = session.get('user_id')
+        
+        # Get all available items NOT owned by current user
+        if user_id:
+            items = Item.query.filter(
+                Item.available == True,
+                Item.owner_id != user_id
+            ).order_by(Item.created_at.desc()).all()
+        else:
+            # If not logged in, show all items
+            items = Item.query.filter_by(available=True).order_by(Item.created_at.desc()).all()
+        
+        return jsonify([{
+            "id": item.id,
+            "owner_id": item.owner_id,
+            "item_name": item.item_name,
+            "description": item.description,
+            "category": item.category,
+            "size": item.size,
+            "brand": item.brand,
+            "condition": item.condition,
+            "price_per_day": item.price_per_day,
+            "images": item.images,
+            "available": item.available,
+            "created_at": item.created_at.isoformat()
+        } for item in items])
         
     @app.after_request
     def debug_cors(response):

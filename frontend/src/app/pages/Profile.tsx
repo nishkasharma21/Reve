@@ -4,7 +4,7 @@ import { Button } from "../components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
-import { User, MapPin, Mail, Edit, Package, Clock, Inbox } from "lucide-react";
+import { User, MapPin, Mail, Edit, Package, Clock, Inbox, PlusCircle } from "lucide-react";
 import { mockItems } from "../data/mockData";
 
 export function Profile() {
@@ -193,6 +193,15 @@ export function Profile() {
 
             {/* Listed Items */}
             <TabsContent value="listed">
+              {/* Add Item Button - always visible at top */}
+              <div className="mb-6">
+                <Link to="/upload" className="block">
+                  <Button className="w-full">
+                    <PlusCircle size={16} className="mr-2" />
+                    Add New Item
+                  </Button>
+                </Link>
+              </div>
               {listedItems.length === 0 ? (
                 <Card>
                   <CardContent className="py-12 text-center">
