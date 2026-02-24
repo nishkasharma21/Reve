@@ -4,7 +4,7 @@ from backend.extensions import db, migrate
 from backend.saml import saml_bp
 from backend.routes.waitlist import waitlist_bp
 from backend.routes.user import user_bp
-from backend.models import User, Item
+from backend.models import User, Item, BorrowRequest
 from backend.routes.borrowrequest import borrow_bp
 import os
 
@@ -169,15 +169,25 @@ def create_app():
     def get_browse_items():
         user_id = session.get('user_id')
         
-        # Get all available items NOT owned by current user
+        # Get IDs of items that are currently being borrowed (approved status)
+        borrowed_item_ids = db.session.query(BorrowRequest.item_id).filter(
+            BorrowRequest.status == 'approved'
+        ).distinct().all()
+        borrowed_item_ids = [item_id[0] for item_id in borrowed_item_ids]
+        
+        # Get all available items NOT owned by current user and NOT currently borrowed
         if user_id:
             items = Item.query.filter(
                 Item.available == True,
-                Item.owner_id != user_id
+                Item.owner_id != user_id,
+                ~Item.id.in_(borrowed_item_ids)  # Exclude borrowed items
             ).order_by(Item.created_at.desc()).all()
         else:
-            # If not logged in, show all items
-            items = Item.query.filter_by(available=True).order_by(Item.created_at.desc()).all()
+            # If not logged in, show all items except borrowed ones
+            items = Item.query.filter(
+                Item.available == True,
+                ~Item.id.in_(borrowed_item_ids)  # Exclude borrowed items
+            ).order_by(Item.created_at.desc()).all()
         
         return jsonify([{
             "id": item.id,
