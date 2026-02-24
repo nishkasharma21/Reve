@@ -134,6 +134,7 @@ def create_app():
             'size': item.size,
             'images': item.images,
             'available': item.available,
+            "link": item.link,
             'brand': item.brand,
             'condition': item.condition,
             'price_per_day': item.price_per_day,
