@@ -103,20 +103,6 @@ export function Navigation() {
               )}
             </Link>
 
-            {/* Upload Button */}
-            <Link to="/upload">
-              <Button size="sm" className="hidden md:inline-flex">
-                List Item
-              </Button>
-            </Link>
-
-            {/* Cart */}
-            <button className="relative">
-              <ShoppingBag size={20} className="hover:text-gray-600 transition-colors" />
-              <span className="absolute -top-2 -right-2 bg-black text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                0
-              </span>
-            </button>
           </div>
         </div>
       </div>

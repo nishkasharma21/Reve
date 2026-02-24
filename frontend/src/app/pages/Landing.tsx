@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Users, Sparkles, Shirt, Instagram, TrendingUp, Menu, X, Moon, Sun } from 'lucide-react';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { useAuth } from '../../contexts/AuthContexts';
+import { LoadingSpinner } from "../components/LoadingSpinner";
 
 export function Landing() {
   const { user, loading } = useAuth();
@@ -74,9 +75,7 @@ export function Landing() {
     element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  if (loading) {
-    return <div>Loading...</div>; // Add your loading spinner
-  }
+  if (loading) return <LoadingSpinner />;
 
   const handleStanfordLogin = () => {
     window.location.href = `${import.meta.env.VITE_API_URL}/saml/login`;

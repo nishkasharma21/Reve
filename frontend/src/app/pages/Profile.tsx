@@ -6,6 +6,7 @@ import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { User, MapPin, Mail, Edit, Package, Clock, Inbox, PlusCircle } from "lucide-react";
 import { mockItems } from "../data/mockData";
+import { LoadingSpinner } from "../components/LoadingSpinner";
 
 export function Profile() {
   const [activeTab, setActiveTab] = useState("listed");
@@ -111,7 +112,7 @@ export function Profile() {
     }
   };
 
-  if (!user) return <div>Loading...</div>;
+  if (!user) return <LoadingSpinner />;
 
   const formattedJoinDate = new Date(user.joinDate).toLocaleDateString("en-US", {
     year: "numeric", month: "long", day: "numeric",
