@@ -17,8 +17,61 @@ export function Waitlist() {
     }
   };
 
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="min-h-screen">
+      {/* Navigation Bar */}
+      <nav className="bg-white text-black sticky top-0 z-50 border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20 py-4">
+            {/* Logo */}
+            <Link 
+              to="/" 
+              className="text-2xl font-black bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 text-transparent bg-clip-text"
+            >
+              REVE
+            </Link>
+
+            {/* Navigation Links */}
+            <div className="hidden md:flex items-center space-x-8">
+              <button
+                onClick={() => scrollToSection('about')}
+                className="text-sm font-medium hover:text-gray-300 transition-colors uppercase tracking-wide"
+              >
+                About
+              </button>
+              <button
+                onClick={() => scrollToSection('features')}
+                className="text-sm font-medium hover:text-gray-300 transition-colors uppercase tracking-wide"
+              >
+                Features
+              </button>
+              <button
+                onClick={() => scrollToSection('waitlist')}
+                className="px-6 py-2.5 rounded-full bg-black text-white font-semibold text-sm uppercase tracking-wide transition-all transform hover:scale-105 shadow-lg"
+              >
+                Join Waitlist
+              </button>
+            </div>
+
+            {/* Mobile CTA */}
+            <Button
+              onClick={() => scrollToSection('waitlist')}
+              variant="outline"
+              className="md:hidden text-black bg-white hover:bg-gray-100"
+            >
+              Join Waitlist
+            </Button>
+          </div>
+        </div>
+      </nav>
+
       {/* Hero Section */}
       <div className="bg-black text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
@@ -87,8 +140,8 @@ export function Waitlist() {
         </div>
       </div>
 
-      {/* Borrow. Share. Discover. */}
-      <div className="bg-gray-900 text-white py-24">
+      {/* About Section - Borrow. Share. Discover. */}
+      <div id="about" className="bg-gray-900 text-white py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl lg:text-6xl font-bold mb-6">
             Borrow. Share. Discover.
@@ -99,8 +152,8 @@ export function Waitlist() {
         </div>
       </div>
 
-      {/* How It Works */}
-      <div className="bg-white py-24">
+      {/* Features Section - How It Works */}
+      <div id="features" className="bg-white py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 text-sm uppercase tracking-widest mb-4 text-gray-500">
@@ -213,7 +266,7 @@ export function Waitlist() {
       </div>
 
       {/* Final CTA */}
-      <div className="bg-black text-white py-24">
+      <div id="waitlist" className="bg-black text-white py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl lg:text-6xl font-bold mb-6">
             Ready to revolutionize
