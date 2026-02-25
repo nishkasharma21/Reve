@@ -55,44 +55,6 @@ def create_app():
     app.register_blueprint(user_bp, url_prefix="/api/user")
     app.register_blueprint(borrow_bp, url_prefix='/api')
 
-    # ── Email Function ────────────────────────────────────────────────────────
-    def send_borrow_request_email(lender_email, lender_name, borrower_name, item_name, start_date, end_date):
-        """Send email notification to lender about new borrow request"""
-        try:
-            msg = Message(
-                subject=f"New Borrow Request for {item_name}",
-                recipients=[lender_email],
-                html=f"""
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #333;">New Borrow Request</h2>
-                    <p>Hi {lender_name},</p>
-                    <p><strong>{borrower_name}</strong> has requested to borrow your item:</p>
-                    
-                    <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                        <h3 style="margin-top: 0;">{item_name}</h3>
-                        <p><strong>Rental Period:</strong></p>
-                        <p>{start_date} to {end_date}</p>
-                    </div>
-                    
-                    <p>You can approve or reject this request in your profile:</p>
-                    <a href="{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/profile" 
-                    style="display: inline-block; background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 20px 0;">
-                        View Request
-                    </a>
-                    
-                    <p style="color: #666; font-size: 14px; margin-top: 30px;">
-                        This is an automated message from Campus Closet. Please do not reply to this email.
-                    </p>
-                </div>
-                """
-            )
-            mail.send(msg)
-            print(f"✅ Email sent to {lender_email}")
-            return True
-        except Exception as e:
-            print(f"❌ Failed to send email: {e}")
-            return False
-
     # ── Routes ────────────────────────────────────────────────────────────────
     @app.route("/")
     def home():
@@ -266,16 +228,6 @@ def create_app():
             db.session.add(new_request)
             db.session.commit()
             
-            # Send email notification (non-blocking - won't fail the request if email fails)
-            send_borrow_request_email(
-                lender_email=lender.email,
-                lender_name=lender.firstName,
-                borrower_name=borrower_name,
-                item_name=item.item_name,
-                start_date=start_date,
-                end_date=end_date
-            )
-            
             return jsonify({
                 'message': 'Borrow request created successfully',
                 'request_id': new_request.id
@@ -286,17 +238,6 @@ def create_app():
             print(f"Error creating borrow request: {e}")
             return jsonify({'error': 'Failed to create borrow request'}), 500
         
-    @app.route('/api/test-email')
-    def test_email():
-        send_borrow_request_email(
-            lender_email="nishkas@stanford.edu",  # Change to your email
-            lender_name="Test User",
-            borrower_name="John Doe",
-            item_name="Test Item",
-            start_date="2025-03-01",
-            end_date="2025-03-05"
-        )
-        return "Email sent! Check your inbox."
 
     return app
 
