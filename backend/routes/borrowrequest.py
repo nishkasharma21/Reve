@@ -29,17 +29,17 @@ def send_borrow_request_email(lender_email, lender_name, borrower_name, item_nam
                 <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
                     <h3 style="margin-top: 0;">{item_name}</h3>
                     <p><strong>Rental Period:</strong></p>
-                    <p>{start_date} to {end_date}</p>
+                    <p>{datetime.strptime(start_date, '%Y-%m-%d').strftime('%B %d, %Y')} to {datetime.strptime(end_date, '%Y-%m-%d').strftime('%B %d, %Y')}</p>
                 </div>
                 
                 <p>You can approve or reject this request in your profile:</p>
                 <a href="{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/profile" 
-                style="display: inline-block; background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 20px 0;">
+                style="display: inline-block; background-color: #000; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: 600; font-size: 16px; text-align: center;">
                     View Request
                 </a>
                 
                 <p style="color: #666; font-size: 14px; margin-top: 30px;">
-                    This is an automated message from Campus Closet. Please do not reply to this email.
+                    This is an automated message from Reve. Please do not reply to this email.
                 </p>
             </div>
             """
