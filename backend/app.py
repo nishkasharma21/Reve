@@ -289,7 +289,7 @@ def create_app():
     @app.route('/api/test-email')
     def test_email():
         send_borrow_request_email(
-            lender_email="your-test-email@gmail.com",  # Change to your email
+            lender_email="nishkas@stanford.edu",  # Change to your email
             lender_name="Test User",
             borrower_name="John Doe",
             item_name="Test Item",
