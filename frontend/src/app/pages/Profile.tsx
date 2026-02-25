@@ -226,7 +226,7 @@ export function Profile() {
                           <div className="flex-1">
                             <div className="flex justify-between items-start mb-2">
                               <div>
-                                <h3 className="font-bold mb-1">{item.name}</h3>
+                                <h3 className="font-bold mb-1">{item.item_name}</h3>
                                 <p className="text-sm text-gray-600">Size {item.size}</p>
                               </div>
                               <Badge variant="secondary">Active</Badge>

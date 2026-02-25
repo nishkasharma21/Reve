@@ -4,9 +4,11 @@ from backend.extensions import db, migrate
 from backend.saml import saml_bp
 from backend.routes.waitlist import waitlist_bp
 from backend.routes.user import user_bp
-from backend.models import User, Item
+from backend.models import User, Item, BorrowRequest
 from backend.routes.borrowrequest import borrow_bp
+from flask_mail import Mail, Message
 import os
+from datetime import datetime
 
 SAML_PROD_FRONTEND_URL = os.getenv('SAML_PROD_FRONTEND_URL', 'http://localhost:3000')
 
@@ -20,11 +22,19 @@ def create_app():
          supports_credentials=True, 
          origins=['http://localhost:3000', 'http://localhost:5173', 'https://goreve.store'])
 
-    # ADD THESE SESSION CONFIGURATIONS
+    # Session configurations
     app.config['SESSION_COOKIE_SECURE'] = True  # Required for HTTPS
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Critical for cross-origin
     app.config['SESSION_COOKIE_DOMAIN'] = None  # Let Flask handle it
+
+    # Email configuration
+    app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+    app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
+    app.config['MAIL_USE_TLS'] = True
+    app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+    app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+    app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
 
     app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY') or os.environ.get('SECRET_KEY')
     uri = os.environ.get("DATABASE_URL")
@@ -37,6 +47,7 @@ def create_app():
     # ── Extensions ────────────────────────────────────────────────────────────
     db.init_app(app)
     migrate.init_app(app, db)
+    mail = Mail(app)  # Initialize Mail with app
 
     # ── Blueprints ────────────────────────────────────────────────────────────
     app.register_blueprint(saml_bp, url_prefix="/saml")
@@ -44,6 +55,43 @@ def create_app():
     app.register_blueprint(user_bp, url_prefix="/api/user")
     app.register_blueprint(borrow_bp, url_prefix='/api')
 
+    # ── Email Function ────────────────────────────────────────────────────────
+    def send_borrow_request_email(lender_email, lender_name, borrower_name, item_name, start_date, end_date):
+        """Send email notification to lender about new borrow request"""
+        try:
+            msg = Message(
+                subject=f"New Borrow Request for {item_name}",
+                recipients=[lender_email],
+                html=f"""
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #333;">New Borrow Request</h2>
+                    <p>Hi {lender_name},</p>
+                    <p><strong>{borrower_name}</strong> has requested to borrow your item:</p>
+                    
+                    <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3 style="margin-top: 0;">{item_name}</h3>
+                        <p><strong>Rental Period:</strong></p>
+                        <p>{start_date} to {end_date}</p>
+                    </div>
+                    
+                    <p>You can approve or reject this request in your profile:</p>
+                    <a href="{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/profile" 
+                    style="display: inline-block; background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 20px 0;">
+                        View Request
+                    </a>
+                    
+                    <p style="color: #666; font-size: 14px; margin-top: 30px;">
+                        This is an automated message from Campus Closet. Please do not reply to this email.
+                    </p>
+                </div>
+                """
+            )
+            mail.send(msg)
+            print(f"✅ Email sent to {lender_email}")
+            return True
+        except Exception as e:
+            print(f"❌ Failed to send email: {e}")
+            return False
 
     # ── Routes ────────────────────────────────────────────────────────────────
     @app.route("/")
@@ -169,6 +217,86 @@ def create_app():
     def debug_cors(response):
         print(f"[CORS] {request.method} {request.path} → {response.headers.get('Access-Control-Allow-Origin')}")
         return response
+    
+    @app.route('/api/borrow-requests', methods=['POST'])
+    def create_borrow_request():
+        """Create a new borrow request and send email to lender"""
+        
+        # Check if user is authenticated
+        if 'user_id' not in session:
+            return jsonify({'error': 'Not authenticated'}), 401
+        
+        data = request.json
+        item_id = data.get('item_id')
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+        borrower_id = session['user_id']
+        
+        # Validate data
+        if not all([item_id, start_date, end_date]):
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        try:
+            # Get item and lender details using SQLAlchemy
+            item = Item.query.get(item_id)
+            
+            if not item:
+                return jsonify({'error': 'Item not found'}), 404
+            
+            # Check if user is trying to borrow their own item
+            if item.owner_id == borrower_id:
+                return jsonify({'error': 'Cannot borrow your own item'}), 400
+            
+            # Get lender (owner) details
+            lender = User.query.get(item.owner_id)
+            
+            # Get borrower details
+            borrower = User.query.get(borrower_id)
+            borrower_name = f"{borrower.firstName} {borrower.lastName}"
+            
+            # Create borrow request
+            new_request = BorrowRequest(
+                item_id=item_id,
+                borrower_id=borrower_id,
+                start_date=datetime.strptime(start_date, '%Y-%m-%d').date(),
+                end_date=datetime.strptime(end_date, '%Y-%m-%d').date(),
+                status='pending'
+            )
+            
+            db.session.add(new_request)
+            db.session.commit()
+            
+            # Send email notification (non-blocking - won't fail the request if email fails)
+            send_borrow_request_email(
+                lender_email=lender.email,
+                lender_name=lender.firstName,
+                borrower_name=borrower_name,
+                item_name=item.item_name,
+                start_date=start_date,
+                end_date=end_date
+            )
+            
+            return jsonify({
+                'message': 'Borrow request created successfully',
+                'request_id': new_request.id
+            }), 201
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error creating borrow request: {e}")
+            return jsonify({'error': 'Failed to create borrow request'}), 500
+        
+    @app.route('/api/test-email')
+    def test_email():
+        send_borrow_request_email(
+            lender_email="your-test-email@gmail.com",  # Change to your email
+            lender_name="Test User",
+            borrower_name="John Doe",
+            item_name="Test Item",
+            start_date="2025-03-01",
+            end_date="2025-03-05"
+        )
+        return "Email sent! Check your inbox."
 
     return app
 
