@@ -207,7 +207,6 @@ export function Profile() {
 
             {/* Rented Tab — outgoing requests */}
             <TabsContent value="rented">
-              {/* Status filter */}
               <div className="flex gap-2 flex-wrap mb-6">
                 {STATUS_FILTERS.map(s => (
                   <button
@@ -225,7 +224,7 @@ export function Profile() {
                 <Card>
                   <CardContent className="py-12 text-center">
                     <User size={48} className="mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-xl font-bold mb-2">No rentals yet</h3>
+                    <h3 className="text-xl font-bold mb-2">No active rentals</h3>
                     <p className="text-gray-600 mb-6">Browse items to find your next outfit</p>
                     <Link to="/browse"><Button>Start Browsing</Button></Link>
                   </CardContent>
@@ -237,26 +236,19 @@ export function Profile() {
                       <CardContent className="p-4">
                         <div className="flex gap-4">
                           <div className="flex-1">
-                            <div className="flex justify-between items-start mb-2">
-                              <div>
-                                <h3 className="font-bold mb-1">{req.item_name}</h3>
-                                {req.start_date && req.end_date && (
-                                  <p className="text-sm text-gray-600 mb-1">
-                                    {new Date(req.start_date).toLocaleDateString()} → {new Date(req.end_date).toLocaleDateString()}
-                                  </p>
-                                )}
-                              </div>
-                              <span className={`text-xs font-medium px-2 py-1 rounded-full capitalize ${STATUS_COLORS[req.status]}`}>
-                                {req.status}
-                              </span>
-                            </div>
-                            <div className="flex gap-2 mt-3">
-                              <Button size="sm" className="flex-1">
-                                Contact Owner
-                              </Button>
-                              <Button size="sm" variant="outline" className="flex-1">
-                                Extend Rental
-                              </Button>
+                            <h3 className="font-bold mb-1">{req.item_name}</h3>
+                            <p className="text-sm text-gray-600 mb-2">Rented from owner</p>
+                            {req.start_date && req.end_date && (
+                              <Badge className="mb-3">
+                                Due: {new Date(req.end_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                              </Badge>
+                            )}
+                            <span className={`block text-xs font-medium px-2 py-1 rounded-full capitalize w-fit mb-3 ${STATUS_COLORS[req.status]}`}>
+                              {req.status}
+                            </span>
+                            <div className="flex gap-2">
+                              <Button size="sm" className="flex-1">Contact Owner</Button>
+                              <Button size="sm" variant="outline" className="flex-1">Extend Rental</Button>
                               {req.status === 'pending' && (
                                 <Button size="sm" variant="outline" onClick={() => updateRequestStatus(req.id, 'cancelled')}>
                                   Cancel
@@ -272,9 +264,8 @@ export function Profile() {
               )}
             </TabsContent>
 
-            {/* Borrow Requests Tab — incoming requests */}
+            {/* Borrow Requests Tab — incoming only */}
             <TabsContent value="requests">
-              {/* Status filter */}
               <div className="flex gap-2 flex-wrap mb-6">
                 {STATUS_FILTERS.map(s => (
                   <button
@@ -292,7 +283,7 @@ export function Profile() {
                 <Card>
                   <CardContent className="py-12 text-center">
                     <Inbox size={48} className="mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-xl font-bold mb-2">
+                    <h3 className="text-xl font-bold mb-2 capitalize">
                       {incomingStatusFilter === 'all' ? 'No requests yet' : `No ${incomingStatusFilter} requests`}
                     </h3>
                     <p className="text-gray-600">
@@ -308,7 +299,7 @@ export function Profile() {
                     <Card key={req.id}>
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start">
-                          <div className="flex-1">
+                          <div>
                             <h3 className="font-bold mb-1">{req.item_name}</h3>
                             <p className="text-sm text-gray-600 mb-1">From: {req.borrower_name}</p>
                             {req.start_date && req.end_date && (
@@ -320,7 +311,7 @@ export function Profile() {
                               {req.status}
                             </span>
                           </div>
-                          <div className="flex flex-col gap-2 ml-4">
+                          <div className="flex gap-2 mt-1">
                             {req.status === 'pending' && (
                               <>
                                 <Button size="sm" onClick={() => updateRequestStatus(req.id, 'approved')}>
@@ -344,6 +335,7 @@ export function Profile() {
                 </div>
               )}
             </TabsContent>
+
           </Tabs>
         </div>
       </div>
