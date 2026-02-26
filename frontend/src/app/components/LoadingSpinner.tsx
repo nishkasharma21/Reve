@@ -1,69 +1,77 @@
-import { Sparkles } from 'lucide-react';
+import { motion } from "motion/react";
 
-export function LoadingSpinner() {
+export function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-[#0a0a1f] flex items-center justify-center relative overflow-hidden">
-      {/* Animated background glows */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#ff00ff] rounded-full opacity-20 blur-[120px] animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#00d4ff] rounded-full opacity-20 blur-[120px] animate-pulse delay-1000" />
-      </div>
-
-      {/* Loading content */}
-      <div className="relative z-10 flex flex-col items-center gap-6">
-        {/* Spinning logo */}
-        <div className="relative">
-          {/* Outer spinning ring */}
-          <div className="w-24 h-24 rounded-full border-4 border-transparent border-t-purple-500 border-r-pink-500 animate-spin" />
-          
-          {/* Inner glow circle */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 opacity-30 animate-pulse" />
-          </div>
-          
-          {/* Center icon */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Sparkles className="w-8 h-8 text-white animate-pulse" />
-          </div>
-        </div>
-
-        {/* REVE text */}
-        <div className="text-center">
-          <h1 
-            className="text-4xl font-black tracking-tight mb-2"
-            style={{
-              background: 'linear-gradient(135deg, #ff00ff, #00d4ff)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            REVE
+    <div className="fixed inset-0 bg-white z-50 flex items-center justify-center">
+      <div className="text-center">
+        {/* Logo/Brand */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
+          <h1 className="text-4xl font-bold tracking-tight mb-2">
+            CAMPUS CLOSET
           </h1>
-          <div className="flex items-center gap-2 text-white/60">
-            <span className="text-sm">Loading</span>
-            <div className="flex gap-1">
-              <div className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-              <div className="w-1.5 h-1.5 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-              <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-            </div>
-          </div>
-        </div>
-      </div>
+          <p className="text-sm text-gray-500 tracking-wide">
+            Rent. Share. Repeat. 🎓
+          </p>
+        </motion.div>
 
-      <style>{`
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 0.2;
-          }
-          50% {
-            opacity: 0.4;
-          }
-        }
-        
-        .delay-1000 {
-          animation-delay: 1s;
-        }
-      `}</style>
+        {/* Animated Loading Dots */}
+        <div className="flex items-center justify-center gap-2">
+          {[0, 1, 2].map((index) => (
+            <motion.div
+              key={index}
+              className="w-3 h-3 bg-black rounded-full"
+              animate={{
+                y: [0, -12, 0],
+                opacity: [1, 0.5, 1],
+              }}
+              transition={{
+                duration: 0.8,
+                repeat: Infinity,
+                delay: index * 0.15,
+                ease: "easeInOut",
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Optional Loading Text */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          className="mt-6 text-sm text-gray-400 uppercase tracking-widest"
+        >
+          Loading
+        </motion.p>
+      </div>
+    </div>
+  );
+}
+
+// Minimal loading spinner version for in-page use
+export function LoadingSpinner({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
+  const sizeClasses = {
+    sm: "w-4 h-4",
+    md: "w-8 h-8",
+    lg: "w-12 h-12",
+  };
+
+  return (
+    <div className="flex items-center justify-center">
+      <motion.div
+        className={`${sizeClasses[size]} border-2 border-gray-200 border-t-black rounded-full`}
+        animate={{ rotate: 360 }}
+        transition={{
+          duration: 1,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+      />
     </div>
   );
 }

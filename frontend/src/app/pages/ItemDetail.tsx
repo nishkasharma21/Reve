@@ -6,8 +6,10 @@ import { Button } from "../components/ui/button";
 import { Calendar } from "../components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { Badge } from "../components/ui/badge";
-import { CalendarIcon, MapPin, User, ArrowLeft, Heart, MessageCircle } from "lucide-react";
+import { CalendarIcon, MapPin, User, ArrowLeft, Heart, MessageCircle, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -60,7 +62,7 @@ export function ItemDetail() {
   };
 
   // REPLACE the old mock-based loading check
-  if (loading) return <div className="max-w-7xl mx-auto px-4 py-12 text-center">Loading...</div>;
+  if (loading) return <LoadingSpinner />;
   if (!item) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
@@ -114,6 +116,14 @@ export function ItemDetail() {
                 <p className="text-3xl font-bold">${item.price_per_day}/day</p>  {/* CHANGE */}
                 <Badge variant="secondary">{item.condition}</Badge>
               </div>
+                {item.link && (
+                  <a href={item.link} target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" size="sm" className="flex items-center gap-2">
+                      <ExternalLink size={16} />
+                      View Item 
+                    </Button>
+                  </a>
+                )}
             </div>
 
             {/* Owner Info */}

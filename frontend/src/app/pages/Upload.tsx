@@ -294,7 +294,22 @@ export function Upload() {
               We recommend $5-$25 per day based on item value
             </p>
           </div>
-
+          {/* NEW: Link field */}
+          <div>
+            <Label htmlFor="link">Product Link</Label>
+            <Input
+              id="link"
+              type="url"
+              value={formData.link}
+              onChange={(e) =>
+                setFormData({ ...formData, link: e.target.value })
+              }
+              placeholder="https://example.com/product"
+            />
+            <p className="text-sm text-gray-600 mt-1">
+              Add a link to the original product page if available
+            </p>
+          </div>
           <div>
             <Label htmlFor="description">Description *</Label>
             <Textarea

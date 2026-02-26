@@ -4,8 +4,9 @@ import { Button } from "../components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
-import { User, MapPin, Mail, Edit, Package, Clock, Inbox } from "lucide-react";
+import { User, MapPin, Mail, Edit, Package, Clock, Inbox, PlusCircle } from "lucide-react";
 import { mockItems } from "../data/mockData";
+import { LoadingSpinner } from "../components/LoadingSpinner";
 
 export function Profile() {
   const [activeTab, setActiveTab] = useState("listed");
@@ -119,7 +120,7 @@ export function Profile() {
     }
   };
 
-  if (!user) return <div>Loading...</div>;
+  if (!user) return <LoadingSpinner />;
 
   const formattedJoinDate = new Date(user.joinDate).toLocaleDateString("en-US", {
     year: "numeric", month: "long", day: "numeric",
@@ -201,6 +202,15 @@ export function Profile() {
 
             {/* Listed Items */}
             <TabsContent value="listed">
+              {/* Add Item Button - always visible at top */}
+              <div className="mb-6">
+                <Link to="/upload" className="block">
+                  <Button className="w-full">
+                    <PlusCircle size={16} className="mr-2" />
+                    Add New Item
+                  </Button>
+                </Link>
+              </div>
               {listedItems.length === 0 ? (
                 <Card>
                   <CardContent className="py-12 text-center">

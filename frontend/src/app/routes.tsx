@@ -1,5 +1,5 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import { Landing } from './pages/Landing';
+import { Waitlist } from './pages/Waitlist';
 import { Onboarding } from './pages/Onboarding';
 import { Home } from './pages/Home';
 import { Profile } from './pages/Profile';
@@ -36,7 +36,7 @@ export const router = createBrowserRouter([
   // Routes WITHOUT Navigation
   {
     path: '/',
-    Component: Landing,
+    Component: Waitlist,
   },
   {
     path: '/onboard',
