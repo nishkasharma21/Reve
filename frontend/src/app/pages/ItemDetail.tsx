@@ -34,32 +34,32 @@ export function ItemDetail() {
 
   // ADD this handler
   const handleRequestToRent = async () => {
-    if (!startDate || !endDate) return;
-    setRequesting(true);
-    try {
-      const res = await fetch(`${API_URL}/api/borrow-requests`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          item_id: item.id,
-          start_date: format(startDate, 'yyyy-MM-dd'),
-          end_date: format(endDate, 'yyyy-MM-dd'),
-        }),
-      });
-      if (res.ok) {
-        alert('Request sent!');
-        navigate('/profile');
-      } else {
-        const err = await res.json();
-        alert(err.error || 'Failed to send request');
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setRequesting(false);
+  if (!startDate || !endDate) return;
+  setRequesting(true);
+  try {
+    const res = await fetch(`${API_URL}/api/rentals`, {  // only change this line
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        item_id: item.id,
+        start_date: format(startDate, 'yyyy-MM-dd'),
+        end_date: format(endDate, 'yyyy-MM-dd'),
+      }),
+    });
+    if (res.ok) {
+      alert('Successfully rented item!');
+      navigate('/profile');
+    } else {
+      const err = await res.json();
+      alert(err.error || 'Failed to rent item');
     }
-  };
+  } catch (e) {
+    console.error(e);
+  } finally {
+    setRequesting(false);
+  }
+};
 
   // REPLACE the old mock-based loading check
   if (loading) return <LoadingSpinner />;
