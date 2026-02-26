@@ -6,6 +6,7 @@ from backend.routes.waitlist import waitlist_bp
 from backend.routes.user import user_bp
 from backend.models import User, Item, BorrowRequest
 from backend.routes.borrowrequest import borrow_bp
+from backend.routes.items import items_bp
 from flask_mail import Mail, Message
 import os
 from datetime import datetime
@@ -54,6 +55,8 @@ def create_app():
     app.register_blueprint(waitlist_bp, url_prefix="/api")
     app.register_blueprint(user_bp, url_prefix="/api/user")
     app.register_blueprint(borrow_bp, url_prefix='/api')
+    app.register_blueprint(items_bp, url_prefix='/api')
+
 
     # ── Routes ────────────────────────────────────────────────────────────────
     @app.route("/")
@@ -77,168 +80,13 @@ def create_app():
             "lastName": user.lastName,
             "joinDate": user.created_at.isoformat()
         })
-
-    @app.route('/api/items', methods=['POST', 'GET'])
-    def create_item():
-        # GET
-        if request.method == 'GET':
-            items = Item.query.filter_by(available=True).order_by(Item.created_at.desc()).all()
-            return jsonify([{
-                "id": item.id,
-                "item_name": item.item_name,
-                "description": item.description,
-                "category": item.category,
-                "size": item.size,
-                "brand": item.brand,
-                "condition": item.condition,
-                "price_per_day": item.price_per_day,
-                "images": item.images,
-                "available": item.available,
-                "created_at": item.created_at.isoformat()
-            } for item in items])
-
-        # POST
-        user_id = session.get('user_id')
-        if not user_id:
-            return jsonify({"error": "You must be logged in to list an item"}), 401
-
-        data = request.get_json(silent=True)
-        if not data:
-            return jsonify({"error": "No data provided"}), 400
-
-        try:
-            new_item = Item(
-                owner_id=user_id,
-                item_name=data.get('item_name'),
-                description=data.get('description'),
-                category=data.get('category'),
-                size=data.get('size'),
-                brand=data.get('brand'),
-                condition=data.get('condition'),
-                price_per_day=int(data.get('price_per_day', 0)),
-                link=data.get('link'),
-                images=data.get('images', []),
-                available=True
-            )
-            db.session.add(new_item)
-            db.session.commit()
-            return jsonify({"message": "Item listed successfully!", "id": new_item.id}), 201
-
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error creating item: {str(e)}")
-            return jsonify({"error": "Could not create item. Check all fields."}), 400
-        
-    @app.route('/api/items/<int:item_id>', methods=['GET'])
-    def get_item(item_id):
-        item = Item.query.get(item_id)
-        if not item:
-            return jsonify({'error': 'Not found'}), 404
-        
-        owner = User.query.get(item.owner_id)
-        return jsonify({
-            'id': item.id,
-            'item_name': item.item_name,
-            'description': item.description,
-            'category': item.category,
-            'size': item.size,
-            'images': item.images,
-            'available': item.available,
-            'brand': item.brand,
-            'condition': item.condition,
-            'price_per_day': item.price_per_day,
-            'owner_id': item.owner_id,
-            'owner_name': f"{owner.firstName} {owner.lastName}",
-        }), 200
-    
-    @app.route('/api/my-items', methods=['GET'])
-    def get_my_items():
-        user_id = session.get('user_id')
-        if not user_id:
-            return jsonify({"error": "You must be logged in"}), 401
-        
-        # Get all items where owner_id matches the current user
-        items = Item.query.filter_by(owner_id=user_id).order_by(Item.created_at.desc()).all()
-        
-        return jsonify([{
-            "id": item.id,
-            "owner_id": item.owner_id,
-            "item_name": item.item_name,
-            "description": item.description,
-            "category": item.category,
-            "size": item.size,
-            "brand": item.brand,
-            "condition": item.condition,
-            "price_per_day": item.price_per_day,
-            "images": item.images,
-            "available": item.available,
-            "created_at": item.created_at.isoformat()
-        } for item in items])
         
     @app.after_request
     def debug_cors(response):
         print(f"[CORS] {request.method} {request.path} → {response.headers.get('Access-Control-Allow-Origin')}")
         return response
     
-    @app.route('/api/borrow-requests', methods=['POST'])
-    def create_borrow_request():
-        """Create a new borrow request and send email to lender"""
-        
-        # Check if user is authenticated
-        if 'user_id' not in session:
-            return jsonify({'error': 'Not authenticated'}), 401
-        
-        data = request.json
-        item_id = data.get('item_id')
-        start_date = data.get('start_date')
-        end_date = data.get('end_date')
-        borrower_id = session['user_id']
-        
-        # Validate data
-        if not all([item_id, start_date, end_date]):
-            return jsonify({'error': 'Missing required fields'}), 400
-        
-        try:
-            # Get item and lender details using SQLAlchemy
-            item = Item.query.get(item_id)
-            
-            if not item:
-                return jsonify({'error': 'Item not found'}), 404
-            
-            # Check if user is trying to borrow their own item
-            if item.owner_id == borrower_id:
-                return jsonify({'error': 'Cannot borrow your own item'}), 400
-            
-            # Get lender (owner) details
-            lender = User.query.get(item.owner_id)
-            
-            # Get borrower details
-            borrower = User.query.get(borrower_id)
-            borrower_name = f"{borrower.firstName} {borrower.lastName}"
-            
-            # Create borrow request
-            new_request = BorrowRequest(
-                item_id=item_id,
-                borrower_id=borrower_id,
-                start_date=datetime.strptime(start_date, '%Y-%m-%d').date(),
-                end_date=datetime.strptime(end_date, '%Y-%m-%d').date(),
-                status='pending'
-            )
-            
-            db.session.add(new_request)
-            db.session.commit()
-            
-            return jsonify({
-                'message': 'Borrow request created successfully',
-                'request_id': new_request.id
-            }), 201
-            
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error creating borrow request: {e}")
-            return jsonify({'error': 'Failed to create borrow request'}), 500
-        
-
+    
     return app
 
 
