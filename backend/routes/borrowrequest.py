@@ -161,6 +161,15 @@ def update_borrow_request(request_id):
     if new_status not in valid_statuses:
         return jsonify({'error': 'Invalid status'}), 400
     
+    # Change availability of the item if it is approved
+    if new_status == 'approved':
+        item = Item.query.get(borrow_request.item_id)
+        item.available = False
+
+    if new_status == 'completed':
+        item = Item.query.get(borrow_request.item_id)
+        item.available = True
+    
     borrow_request.status = new_status
     db.session.commit()
     
