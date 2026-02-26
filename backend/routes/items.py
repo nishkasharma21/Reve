@@ -118,7 +118,6 @@ def get_browse_items():
         # If not logged in, show all items except borrowed ones
         items = Item.query.filter(
             Item.available == True,
-            ~Item.id.in_(borrowed_item_ids)  # Exclude borrowed items
         ).order_by(Item.created_at.desc()).all()
     
     return jsonify([{

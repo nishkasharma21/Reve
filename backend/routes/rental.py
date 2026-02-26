@@ -4,7 +4,7 @@ from backend.extensions import db
 from datetime import datetime
 import os
 
-borrow_bp = Blueprint('borrow', __name__)
+rental_bp = Blueprint('rental', __name__)
 
 
 def send_rental_email(lender_email, lender_name, borrower_name, item_name):
@@ -42,7 +42,7 @@ def send_rental_email(lender_email, lender_name, borrower_name, item_name):
         return False
 
 
-@borrow_bp.route('/rentals', methods=['POST'])
+@rental_bp.route('/rentals', methods=['POST'])
 def create_rental():
     user_id = session.get('user_id')
     if not user_id:
@@ -95,7 +95,7 @@ def create_rental():
     }), 201
 
 
-@borrow_bp.route('/rentals', methods=['GET'])
+@rental_bp.route('/rentals', methods=['GET'])
 def get_rentals():
     user_id = session.get('user_id')
     if not user_id:
@@ -141,7 +141,7 @@ def get_rentals():
     }), 200
 
 
-@borrow_bp.route('/rentals/<int:rental_id>/confirm-pickup', methods=['POST'])
+@rental_bp.route('/rentals/<int:rental_id>/confirm-pickup', methods=['POST'])
 def confirm_pickup(rental_id):
     user_id = session.get('user_id')
     if not user_id:
@@ -165,7 +165,7 @@ def confirm_pickup(rental_id):
     return jsonify({'success': True, 'status': 'in_use'}), 200
 
 
-@borrow_bp.route('/rentals/<int:rental_id>/confirm-return', methods=['POST'])
+@rental_bp.route('/rentals/<int:rental_id>/confirm-return', methods=['POST'])
 def confirm_return(rental_id):
     user_id = session.get('user_id')
     if not user_id:
@@ -189,7 +189,7 @@ def confirm_return(rental_id):
     return jsonify({'success': True, 'status': 'returned'}), 200
 
 
-@borrow_bp.route('/rentals/<int:rental_id>/cancel', methods=['PATCH'])
+@rental_bp.route('/rentals/<int:rental_id>/cancel', methods=['PATCH'])
 def cancel_rental(rental_id):
     user_id = session.get('user_id')
     if not user_id:
