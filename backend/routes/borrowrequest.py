@@ -1,9 +1,56 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, current_app
 from backend.models import BorrowRequest, Item, User
 from backend.extensions import db
 from datetime import datetime
+from flask_mail import Message, Mail
 
 borrow_bp = Blueprint('borrow', __name__)
+
+def send_borrow_request_email(lender_email, lender_name, borrower_name, item_name, start_date, end_date):
+    """Send email notification to lender about new borrow request"""
+    try:
+        from flask import current_app
+        mail = current_app.extensions.get('mail')
+        
+        if not mail:
+            print("❌ Flask-Mail not initialized")
+            return False
+        
+        import os
+        msg = Message(
+            subject=f"New Borrow Request for {item_name}",
+            recipients=[lender_email],
+            html=f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #333;">New Borrow Request</h2>
+                <p>Hi {lender_name},</p>
+                <p><strong>{borrower_name}</strong> has requested to borrow your item:</p>
+                
+                <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <h3 style="margin-top: 0;">{item_name}</h3>
+                    <p><strong>Rental Period:</strong></p>
+                    <p>{datetime.strptime(start_date, '%Y-%m-%d').strftime('%B %d, %Y')} to {datetime.strptime(end_date, '%Y-%m-%d').strftime('%B %d, %Y')}</p>
+                </div>
+                
+                <p>You can approve or reject this request in your profile:</p>
+                <a href="{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/profile" 
+                style="display: inline-block; background-color: #000; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: 600; font-size: 16px; text-align: center;">
+                    View Request
+                </a>
+                
+                <p style="color: #666; font-size: 14px; margin-top: 30px;">
+                    This is an automated message from Reve. Please do not reply to this email.
+                </p>
+            </div>
+            """
+        )
+        mail.send(msg)
+        print(f"✅ Email sent to {lender_email}")
+        return True
+    except Exception as e:
+        print(f"❌ Failed to send email: {e}")
+        return False
+
 
 @borrow_bp.route('/borrow-requests', methods=['POST'])
 def create_borrow_request():
@@ -38,6 +85,21 @@ def create_borrow_request():
     )
     db.session.add(borrow_request)
     db.session.commit()
+    
+    # Get lender and borrower details for email
+    lender = User.query.get(item.owner_id)
+    borrower = User.query.get(user_id)
+    borrower_name = f"{borrower.firstName} {borrower.lastName}"
+    
+    # Send email notification (won't fail the request if email fails)
+    send_borrow_request_email(
+        lender_email=lender.email,
+        lender_name=lender.firstName,
+        borrower_name=borrower_name,
+        item_name=item.item_name,
+        start_date=data.get('start_date'),
+        end_date=data.get('end_date')
+    )
     
     return jsonify({'success': True, 'id': borrow_request.id}), 201
 
