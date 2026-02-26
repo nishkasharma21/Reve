@@ -110,14 +110,15 @@ def get_borrow_requests():
     if not user_id:
         return jsonify({'error': 'Not authenticated'}), 401
     
-    # Requests user sent
-    outgoing = BorrowRequest.query.filter_by(borrower_id=user_id).all()
-    
-    # Requests for items user owns
+    # Requests user sent ordered chronologically
+    outgoing = BorrowRequest.query.filter_by(borrower_id=user_id)\
+        .order_by(BorrowRequest.created_at.desc()).all()
+
+    # Requests for items user owns, ordered chronologically
     owned_item_ids = [item.id for item in Item.query.filter_by(owner_id=user_id).all()]
     incoming = BorrowRequest.query.filter(
         BorrowRequest.item_id.in_(owned_item_ids)
-    ).all() if owned_item_ids else []
+    ).order_by(BorrowRequest.created_at.desc()).all() if owned_item_ids else []
     
     def serialize(r):
         return {
