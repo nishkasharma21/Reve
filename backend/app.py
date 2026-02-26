@@ -4,8 +4,8 @@ from backend.extensions import db, migrate
 from backend.saml import saml_bp
 from backend.routes.waitlist import waitlist_bp
 from backend.routes.user import user_bp
-from backend.models import User, Item, BorrowRequest
-from backend.routes.borrowrequest import borrow_bp
+from backend.models import User, Item, Rental
+from backend.routes.rental import rental_bp
 from backend.routes.items import items_bp
 from flask_mail import Mail, Message
 import os
@@ -54,7 +54,7 @@ def create_app():
     app.register_blueprint(saml_bp, url_prefix="/saml")
     app.register_blueprint(waitlist_bp, url_prefix="/api")
     app.register_blueprint(user_bp, url_prefix="/api/user")
-    app.register_blueprint(borrow_bp, url_prefix='/api')
+    app.register_blueprint(rental_bp, url_prefix='/api')
     app.register_blueprint(items_bp, url_prefix='/api')
 
 
