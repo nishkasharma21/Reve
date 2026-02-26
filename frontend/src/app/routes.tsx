@@ -12,6 +12,9 @@ import { HowItWorks } from './pages/HowItWorks';
 import { Layout } from './Layout';
 import { useAuth } from '../contexts/AuthContexts';
 import { LoadingSpinner } from './components/LoadingSpinner';
+import SellerDashboard from './pages/ConnectOnboarding';
+import Done from './pages/Done';
+import Storefront from './pages/Storefront';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -82,6 +85,18 @@ export const router = createBrowserRouter([
       {
         path: '*',
         Component: NotFound,
+      },
+      {
+        path: '/seller/dashboard',
+        element: <SellerDashboard />,   // renamed from Home.jsx
+      },
+      {
+        path: '/seller/done',
+        element: <Done />,
+      },
+      {
+        path: '/storefront/:accountId',
+        element: <Storefront />,
       },
     ],
   },

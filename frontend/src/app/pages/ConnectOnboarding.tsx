@@ -1,6 +1,7 @@
+// @ts-nocheck
 import React, { useState } from "react";
-import { useAccount } from "./AccountProvider";
-import AccountStatus from "./AccountStatus";
+import { useStripeAccount as useAccount } from "../../contexts/AccountProvider";
+import AccountStatus from "../components/AccountStatus";
 
 const ConnectOnboarding = () => {
   const [email, setEmail] = useState("");

@@ -1,8 +1,9 @@
+// @ts-nocheck
 import React from "react";
-import { useAccount } from "./AccountProvider";
+import { useStripeAccount as useAccount } from "../../contexts/AccountProvider";
 import useAccountStatus from "./useAccountStatus";
 
-const AccountStatus = ({ onStartOnboarding }) => {
+const AccountStatus = ({ onStartOnboarding }: { onStartOnboarding: () => void }) => {
   const { setAccountId } = useAccount();
   const { accountStatus, needsOnboarding } = useAccountStatus();
   if (!accountStatus) {

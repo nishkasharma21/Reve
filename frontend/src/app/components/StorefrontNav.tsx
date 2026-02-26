@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useAccount } from "./AccountProvider";
+import { useStripeAccount as useAccount } from "../../contexts/AccountProvider";
 
 const StorefrontNav = () => {
   const { accountId } = useAccount();

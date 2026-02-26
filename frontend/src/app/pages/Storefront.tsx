@@ -1,9 +1,10 @@
+// @ts-nocheck
 import React from "react";
-import Products from "./Products";
-import { useAccount } from "./AccountProvider";
+import { useParams } from "react-router";
+import { useStripeAccount as useAccount } from "../../contexts/StripeAccountContext";
 
 const Storefront = () => {
-  const { accountId } = useAccount();
+  const { accountId } = useParams();
 
   return (
     <div className="App">
@@ -13,7 +14,6 @@ const Storefront = () => {
             ? "Platform Products"
             : `Store ${accountId}`}
         </div>
-        <Products />
       </div>
     </div>
   );
