@@ -57,7 +57,7 @@ def create_item():
         print(f"Error creating item: {str(e)}")
         return jsonify({"error": "Could not create item. Check all fields."}), 400
     
-@items_bp.route('/api/items/<int:item_id>', methods=['GET'])
+@items_bp.route('/items/<int:item_id>', methods=['GET'])
 def get_item(item_id):
     item = Item.query.get(item_id)
     if not item:
@@ -80,7 +80,7 @@ def get_item(item_id):
         'owner_name': f"{owner.firstName} {owner.lastName}",
     }), 200
 
-@items_bp.route('/api/my-items', methods=['GET'])
+@items_bp.route('/my-items', methods=['GET'])
 def get_my_items():
     user_id = session.get('user_id')
     if not user_id:
@@ -104,7 +104,7 @@ def get_my_items():
         "created_at": item.created_at.isoformat()
     } for item in items])
 
-@items_bp.route('/api/browse-items', methods=['GET'])
+@items_bp.route('/browse-items', methods=['GET'])
 def get_browse_items():
     user_id = session.get('user_id')
     
