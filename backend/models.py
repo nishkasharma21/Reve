@@ -15,6 +15,7 @@ class User(db.Model):
     lastName = db.Column(db.String(100), nullable=False)
     profile_pic = db.Column(db.String(255))
     dorm_location = db.Column(db.String(100))
+    stripe_account_id = db.Column(db.String(64), nullable=True)
     
     created_at = db.Column(db.DateTime, server_default=func.now())
     

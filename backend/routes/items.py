@@ -1,6 +1,6 @@
 
 from flask import Blueprint, request, jsonify, session
-from backend.models import Item, User, BorrowRequest
+from backend.models import Item, User, Rental
 from backend.extensions import db
 from datetime import datetime
 

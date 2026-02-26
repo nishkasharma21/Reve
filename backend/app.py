@@ -4,7 +4,7 @@ from backend.extensions import db, migrate
 from backend.saml import saml_bp
 from backend.routes.waitlist import waitlist_bp
 from backend.routes.user import user_bp
-from backend.models import User, Item, BorrowRequest
+from backend.models import User, Item, Rental
 from backend.routes.borrowrequest import borrow_bp
 from backend.routes.items import items_bp
 from flask_mail import Mail, Message

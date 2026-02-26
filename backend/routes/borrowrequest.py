@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, session, current_app
-from backend.models import BorrowRequest, Item, User
+from backend.models import Item, User, Rental
 from backend.extensions import db
 from datetime import datetime
 from flask_mail import Message, Mail
