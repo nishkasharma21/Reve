@@ -132,7 +132,7 @@ export function Waitlist() {
                 <div className="text-sm text-gray-400 uppercase tracking-wide">Universities</div>
               </div>
               <div>
-                <div className="text-4xl font-bold mb-1">Spring 2025</div>
+                <div className="text-4xl font-bold mb-1">Spring 2026</div>
                 <div className="text-sm text-gray-400 uppercase tracking-wide">Launching</div>
               </div>
             </div>
@@ -302,7 +302,7 @@ export function Waitlist() {
                 <CheckCircle className="text-green-600" size={32} />
                 <div className="text-left">
                   <h3 className="font-bold text-xl mb-1">Welcome to Campus Closet!</h3>
-                  <p className="text-gray-600">We'll see you in Spring 2025.</p>
+                  <p className="text-gray-600">We'll see you in Spring 2026.</p>
                 </div>
               </div>
             </div>
