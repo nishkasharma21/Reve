@@ -97,7 +97,19 @@ def get_my_items():
     if not user_id:
         return jsonify({"error": "You must be logged in"}), 401
 
+    today = date.today()
     items = Item.query.filter_by(owner_id=user_id).order_by(Item.created_at.desc()).all()
+
+    for item in items:
+        active_block = ItemUnavailability.query.filter(
+            ItemUnavailability.item_id == item.id,
+            ItemUnavailability.start_date <= today,
+            ItemUnavailability.end_date >= today
+        ).first()
+        item.available = active_block is None
+
+    db.session.commit()
+
     return jsonify([{
         "id": item.id,
         "owner_id": item.owner_id,
@@ -118,15 +130,24 @@ def get_my_items():
 def get_browse_items():
     user_id = session.get('user_id')
 
+    # Fetch all candidate items first, then recompute availability before filtering
     if user_id:
-        items = Item.query.filter(
-            Item.available == True,
-            Item.owner_id != user_id,
-        ).order_by(Item.created_at.desc()).all()
+        items = Item.query.filter(Item.owner_id != user_id).order_by(Item.created_at.desc()).all()
     else:
-        items = Item.query.filter(
-            Item.available == True,
-        ).order_by(Item.created_at.desc()).all()
+        items = Item.query.order_by(Item.created_at.desc()).all()
+
+    # Recompute from blocks so expired blocks flip items back to available
+    today = date.today()
+    for item in items:
+        active_block = ItemUnavailability.query.filter(
+            ItemUnavailability.item_id == item.id,
+            ItemUnavailability.start_date <= today,
+            ItemUnavailability.end_date >= today
+        ).first()
+        item.available = active_block is None
+    db.session.commit()
+
+    available_items = [item for item in items if item.available]
 
     return jsonify([{
         "id": item.id,
@@ -141,7 +162,7 @@ def get_browse_items():
         "images": item.images,
         "available": item.available,
         "created_at": item.created_at.isoformat()
-    } for item in items])
+    } for item in available_items])
 
 
 @items_bp.route('/items/<int:item_id>/block', methods=['POST'])
