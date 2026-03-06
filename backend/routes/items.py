@@ -130,24 +130,15 @@ def get_my_items():
 def get_browse_items():
     user_id = session.get('user_id')
 
-    # Fetch all candidate items first, then recompute availability before filtering
     if user_id:
-        items = Item.query.filter(Item.owner_id != user_id).order_by(Item.created_at.desc()).all()
+        items = Item.query.filter(
+            Item.available == True,
+            Item.owner_id != user_id,
+        ).order_by(Item.created_at.desc()).all()
     else:
-        items = Item.query.order_by(Item.created_at.desc()).all()
-
-    # Recompute from blocks so expired blocks flip items back to available
-    today = date.today()
-    for item in items:
-        active_block = ItemUnavailability.query.filter(
-            ItemUnavailability.item_id == item.id,
-            ItemUnavailability.start_date <= today,
-            ItemUnavailability.end_date >= today
-        ).first()
-        item.available = active_block is None
-    db.session.commit()
-
-    available_items = [item for item in items if item.available]
+        items = Item.query.filter(
+            Item.available == True,
+        ).order_by(Item.created_at.desc()).all()
 
     return jsonify([{
         "id": item.id,
@@ -162,7 +153,7 @@ def get_browse_items():
         "images": item.images,
         "available": item.available,
         "created_at": item.created_at.isoformat()
-    } for item in available_items])
+    } for item in items])
 
 
 @items_bp.route('/items/<int:item_id>/block', methods=['POST'])
@@ -239,3 +230,29 @@ def unblock_dates(block_id):
     db.session.delete(block)
     db.session.commit()
     return jsonify({'message': 'Dates unblocked'}), 200
+
+@items_bp.route('/items/<int:item_id>', methods=['PATCH'])
+def update_item(item_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    item = Item.query.get_or_404(item_id)
+    if item.owner_id != user_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+
+    updatable = ['item_name', 'description', 'category', 'size', 'brand', 'condition', 'price_per_day', 'link', 'images']
+    for field in updatable:
+        if field in data:
+            setattr(item, field, data[field])
+
+    try:
+        db.session.commit()
+        return jsonify({'message': 'Item updated successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Could not update item'}), 400

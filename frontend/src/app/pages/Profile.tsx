@@ -528,7 +528,7 @@ export function Profile() {
                               </div>
                               <p className="font-bold mb-3">${item.price_per_day}/day</p>
                               <div className="flex gap-2">
-                                <Button size="sm" variant="outline" className="flex-1">Edit</Button>
+                                <Link to={`/items/${item.id}`}><Button size="sm" variant="outline" className="w-full">Edit</Button></Link>
                                 <div className="relative flex-1">
                                   <Button
                                     size="sm"
