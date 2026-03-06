@@ -10,7 +10,7 @@ from backend.routes.items import items_bp
 from flask_mail import Mail, Message
 import os
 from datetime import datetime
-from backend.routes.stripe_connect import stripe_bp as stripe_connect_bp
+from backend.routes.stripe_connect import stripe_bp
 
 SAML_PROD_FRONTEND_URL = os.getenv('SAML_PROD_FRONTEND_URL', 'http://localhost:3000')
 
@@ -57,7 +57,7 @@ def create_app():
     app.register_blueprint(user_bp, url_prefix="/api/user")
     app.register_blueprint(rental_bp, url_prefix='/api')
     app.register_blueprint(items_bp, url_prefix='/api')
-    app.register_blueprint(stripe_connect_bp, url_prefix='/api')
+    app.register_blueprint(stripe_bp, url_prefix='/api')
 
 
     # ── Routes ────────────────────────────────────────────────────────────────
