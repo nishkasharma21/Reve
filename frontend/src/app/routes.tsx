@@ -68,7 +68,7 @@ export const router = createBrowserRouter([
         Component: Browse,
       },
       {
-        path: '/item/:id',
+        path: '/items/:id',
         Component: ItemDetail,
       },
       {
