@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, session, current_app
 from backend.models import Item, User, Rental
 from backend.extensions import db
-from datetime import datetime
+from datetime import date
 import os
 
 rental_bp = Blueprint('rental', __name__)
@@ -108,13 +108,16 @@ def get_rentals():
         .order_by(Rental.created_at.desc()).all()
 
     def serialize_borrowed(r):
+        status = r.status
+        if r.status == 'in_use' and r.end_date and r.end_date < date.today():
+            status = 'overdue'
         return {
             'id': r.id,
             'item_id': r.item_id,
             'item_name': r.item.item_name,
             'item_image': r.item.images[0] if r.item.images else None,
             'owner_name': f"{r.owner.firstName} {r.owner.lastName}",
-            'status': r.status,
+            'status': status,
             'pickup_code': r.pickup_code,
             'start_date': r.start_date.isoformat() if r.start_date else None,
             'end_date': r.end_date.isoformat() if r.end_date else None,
@@ -122,13 +125,16 @@ def get_rentals():
         }
 
     def serialize_lent(r):
+        status = r.status
+        if r.status == 'in_use' and r.end_date and r.end_date < date.today():
+            status = 'overdue'
         return {
             'id': r.id,
             'item_id': r.item_id,
             'item_name': r.item.item_name,
             'item_image': r.item.images[0] if r.item.images else None,
             'borrower_name': f"{r.borrower.firstName} {r.borrower.lastName}",
-            'status': r.status,
+            'status': status,
             'return_code': r.return_code if r.status == 'in_use' else None,
             'start_date': r.start_date.isoformat() if r.start_date else None,
             'end_date': r.end_date.isoformat() if r.end_date else None,
