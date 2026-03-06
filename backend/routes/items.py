@@ -53,12 +53,33 @@ def create_item():
         return jsonify({"error": "Could not create item. Check all fields."}), 400
 
 
-@items_bp.route('/items/<int:item_id>', methods=['GET'])
-def get_item(item_id):
+@items_bp.route('/items/<int:item_id>', methods=['GET', 'PATCH'])
+def get_or_update_item(item_id):
     item = Item.query.get(item_id)
     if not item:
         return jsonify({'error': 'Not found'}), 404
 
+    if request.method == 'PATCH':
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'Not authenticated'}), 401
+        if item.owner_id != user_id:
+            return jsonify({'error': 'Unauthorized'}), 403
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        updatable = ['item_name', 'description', 'category', 'size', 'brand', 'condition', 'price_per_day', 'link', 'images']
+        for field in updatable:
+            if field in data:
+                setattr(item, field, data[field])
+        try:
+            db.session.commit()
+            return jsonify({'message': 'Item updated successfully'}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': 'Could not update item'}), 400
+
+    # GET
     today = date.today()
     active_block = ItemUnavailability.query.filter(
         ItemUnavailability.item_id == item_id,
@@ -230,29 +251,3 @@ def unblock_dates(block_id):
     db.session.delete(block)
     db.session.commit()
     return jsonify({'message': 'Dates unblocked'}), 200
-
-@items_bp.route('/items/<int:item_id>', methods=['PATCH'])
-def update_item(item_id):
-    user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({'error': 'Not authenticated'}), 401
-
-    item = Item.query.get_or_404(item_id)
-    if item.owner_id != user_id:
-        return jsonify({'error': 'Unauthorized'}), 403
-
-    data = request.get_json()
-    if not data:
-        return jsonify({'error': 'No data provided'}), 400
-
-    updatable = ['item_name', 'description', 'category', 'size', 'brand', 'condition', 'price_per_day', 'link', 'images']
-    for field in updatable:
-        if field in data:
-            setattr(item, field, data[field])
-
-    try:
-        db.session.commit()
-        return jsonify({'message': 'Item updated successfully'}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': 'Could not update item'}), 400
