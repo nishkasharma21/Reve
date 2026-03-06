@@ -158,12 +158,12 @@ def block_dates(item_id):
     start = datetime.strptime(data['start_date'], '%Y-%m-%d').date()
     end = datetime.strptime(data['end_date'], '%Y-%m-%d').date()
 
-    conflict = next((
-        r for r in item.rentals
-        if r.status in ('pending_pickup', 'in_use')
-        and r.start_date and r.end_date
-        and start <= r.end_date and end >= r.start_date
-    ), None)
+    conflict = Rental.query.filter(
+        Rental.item_id == item_id,
+        Rental.status.in_(['pending_pickup', 'in_use']),
+        Rental.start_date <= end,
+        Rental.end_date >= start
+    ).first()
 
     if conflict:
         return jsonify({'error': f'Item is rented from {conflict.start_date} to {conflict.end_date}'}), 409
@@ -188,12 +188,12 @@ def update_block(block_id):
     start = datetime.strptime(data['start_date'], '%Y-%m-%d').date()
     end = datetime.strptime(data['end_date'], '%Y-%m-%d').date()
 
-    conflict = next((
-        r for r in item.rentals
-        if r.status in ('pending_pickup', 'in_use')
-        and r.start_date and r.end_date
-        and start <= r.end_date and end >= r.start_date
-    ), None)
+    conflict = Rental.query.filter(
+        Rental.item_id == block.item_id,
+        Rental.status.in_(['pending_pickup', 'in_use']),
+        Rental.start_date <= end,
+        Rental.end_date >= start
+    ).first()
 
     if conflict:
         return jsonify({'error': f'Item is rented from {conflict.start_date} to {conflict.end_date}'}), 409
