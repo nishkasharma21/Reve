@@ -65,22 +65,43 @@ def get_or_update_item(item_id):
             return jsonify({'error': 'Not authenticated'}), 401
         if item.owner_id != user_id:
             return jsonify({'error': 'Unauthorized'}), 403
+
         data = request.get_json()
         if not data:
             return jsonify({'error': 'No data provided'}), 400
-        updatable = ['item_name', 'description', 'category', 'size', 'brand', 'condition', 'price_per_day', 'link', 'images']
+
+        updatable = [
+            'item_name','description','category','size',
+            'brand','condition','price_per_day','link','images'
+        ]
+
         for field in updatable:
             if field in data:
                 setattr(item, field, data[field])
+
         try:
             db.session.commit()
             return jsonify({'message': 'Item updated successfully'}), 200
-        except Exception as e:
+        except Exception:
             db.session.rollback()
             return jsonify({'error': 'Could not update item'}), 400
 
-    # GET
+    # ─── GET ─────────────────────────────────────────
+
     today = date.today()
+
+    # 🔹 DELETE expired blocks
+    expired_blocks = ItemUnavailability.query.filter(
+        ItemUnavailability.item_id == item_id,
+        ItemUnavailability.end_date < today
+    ).all()
+
+    for block in expired_blocks:
+        db.session.delete(block)
+
+    db.session.commit()
+
+    # check if currently blocked
     active_block = ItemUnavailability.query.filter(
         ItemUnavailability.item_id == item_id,
         ItemUnavailability.start_date <= today,
@@ -91,6 +112,7 @@ def get_or_update_item(item_id):
     db.session.commit()
 
     owner = User.query.get(item.owner_id)
+
     return jsonify({
         'id': item.id,
         'item_name': item.item_name,
@@ -106,7 +128,11 @@ def get_or_update_item(item_id):
         'owner_id': item.owner_id,
         'owner_name': f"{owner.firstName} {owner.lastName}",
         'unavailability_blocks': [
-            {'id': b.id, 'start_date': b.start_date.isoformat(), 'end_date': b.end_date.isoformat()}
+            {
+                'id': b.id,
+                'start_date': b.start_date.isoformat(),
+                'end_date': b.end_date.isoformat()
+            }
             for b in item.unavailability_blocks
         ],
     }), 200
