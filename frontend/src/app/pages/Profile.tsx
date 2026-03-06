@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams } from "react-router";
 import { Button } from "../components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
-import { User, MapPin, Mail, Edit, Package, Clock, Inbox, PlusCircle, ArrowDownToLine } from "lucide-react";
+import { User, MapPin, Mail, Edit, Package, Clock, Inbox, PlusCircle, ArrowDownToLine, CalendarOff, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -33,6 +33,221 @@ interface Rental {
   borrower_name?: string;
 }
 
+interface UnavailabilityRange {
+  start: Date | null;
+  end: Date | null;
+}
+
+// ─── Unavailability Calendar Popover ────────────────────────────────────────
+
+function UnavailabilityCalendar({
+  itemId,
+  onClose,
+}: {
+  itemId: number;
+  onClose: () => void;
+}) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const [range, setRange] = useState<UnavailabilityRange>({ start: null, end: null });
+  const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [onClose]);
+
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const monthName = viewDate.toLocaleString("default", { month: "long" });
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const prevMonth = () => setViewDate(new Date(year, month - 1, 1));
+  const nextMonth = () => setViewDate(new Date(year, month + 1, 1));
+
+  const handleDayClick = (date: Date) => {
+    if (date < today) return;
+    if (!range.start || (range.start && range.end)) {
+      setRange({ start: date, end: null });
+    } else {
+      if (date < range.start) {
+        setRange({ start: date, end: range.start });
+      } else {
+        setRange({ start: range.start, end: date });
+      }
+    }
+  };
+
+  const isInRange = (date: Date) => {
+    const start = range.start;
+    const end = range.end ?? hoveredDate;
+    if (!start || !end) return false;
+    const lo = start < end ? start : end;
+    const hi = start < end ? end : start;
+    return date > lo && date < hi;
+  };
+
+  const isStart = (date: Date) => range.start?.toDateString() === date.toDateString();
+  const isEnd = (date: Date) => range.end?.toDateString() === date.toDateString();
+  const isPast = (date: Date) => date < today;
+
+  const formatDate = (d: Date) =>
+    d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+  const handleSave = async () => {
+    if (!range.start) return;
+    setSaving(true);
+    try {
+      await fetch(`${API_URL}/api/items/${itemId}/unavailability`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          start_date: range.start.toISOString().split("T")[0],
+          end_date: (range.end ?? range.start).toISOString().split("T")[0],
+        }),
+      });
+      setSaved(true);
+      setTimeout(() => {
+        setSaved(false);
+        onClose();
+      }, 1200);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const cells: (Date | null)[] = [
+    ...Array(firstDay).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => new Date(year, month, i + 1)),
+  ];
+
+  return (
+    <div
+      ref={ref}
+      className="absolute z-50 mt-2 right-0 bg-white border border-gray-200 rounded-2xl shadow-2xl p-4 w-72"
+      style={{ boxShadow: "0 8px 40px rgba(0,0,0,0.13)" }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-1">
+          <CalendarOff size={15} className="text-gray-400" />
+          <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Block Dates</span>
+        </div>
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors">
+          <X size={16} />
+        </button>
+      </div>
+
+      {/* Month nav */}
+      <div className="flex items-center justify-between mb-3">
+        <button
+          onClick={prevMonth}
+          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <span className="text-sm font-bold">{monthName} {year}</span>
+        <button
+          onClick={nextMonth}
+          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+        >
+          <ChevronRight size={16} />
+        </button>
+      </div>
+
+      {/* Day labels */}
+      <div className="grid grid-cols-7 mb-1">
+        {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+          <div key={d} className="text-center text-[10px] font-semibold text-gray-400 py-1">{d}</div>
+        ))}
+      </div>
+
+      {/* Days */}
+      <div className="grid grid-cols-7 gap-y-0.5">
+        {cells.map((date, i) => {
+          if (!date) return <div key={`empty-${i}`} />;
+          const past = isPast(date);
+          const start = isStart(date);
+          const end = isEnd(date);
+          const inRange = isInRange(date);
+          const isToday = date.toDateString() === today.toDateString();
+
+          return (
+            <button
+              key={date.toDateString()}
+              disabled={past}
+              onClick={() => handleDayClick(date)}
+              onMouseEnter={() => setHoveredDate(date)}
+              onMouseLeave={() => setHoveredDate(null)}
+              className={[
+                "relative h-8 w-full text-xs font-medium transition-all select-none",
+                past ? "text-gray-300 cursor-not-allowed" : "cursor-pointer",
+                (start || end)
+                  ? "bg-black text-white rounded-full z-10"
+                  : inRange
+                  ? "bg-gray-100 text-gray-800"
+                  : isToday
+                  ? "text-black underline underline-offset-2"
+                  : "hover:bg-gray-100 text-gray-700 rounded-full",
+              ].join(" ")}
+            >
+              {date.getDate()}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Selection summary */}
+      <div className="mt-3 min-h-[28px]">
+        {range.start && (
+          <p className="text-xs text-gray-500 text-center">
+            {range.end
+              ? `${formatDate(range.start)} → ${formatDate(range.end)}`
+              : `From ${formatDate(range.start)} — pick end date`}
+          </p>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-2 mt-3">
+        <Button
+          size="sm"
+          variant="outline"
+          className="flex-1 text-xs"
+          onClick={() => setRange({ start: null, end: null })}
+          disabled={!range.start}
+        >
+          Clear
+        </Button>
+        <Button
+          size="sm"
+          className="flex-1 text-xs"
+          disabled={!range.start || saving}
+          onClick={handleSave}
+        >
+          {saved ? "Saved ✓" : saving ? "Saving…" : "Save"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Profile ─────────────────────────────────────────────────────────────────
+
 export function Profile() {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'listed');
@@ -44,11 +259,11 @@ export function Profile() {
   const [borrowedStatusFilter, setBorrowedStatusFilter] = useState('all');
   const [lentStatusFilter, setLentStatusFilter] = useState('all');
 
-  // Confirm pickup state (lent tab)
+  // Manage calendar open state: itemId or null
+  const [manageOpenFor, setManageOpenFor] = useState<number | null>(null);
+
   const [pickupInput, setPickupInput] = useState<Record<number, string>>({});
   const [pickupError, setPickupError] = useState<Record<number, string>>({});
-
-  // Confirm return state (borrowed tab)
   const [returnInput, setReturnInput] = useState<Record<number, string>>({});
   const [returnError, setReturnError] = useState<Record<number, string>>({});
 
@@ -258,7 +473,28 @@ export function Profile() {
                             <p className="font-bold mb-3">${item.price_per_day}/day</p>
                             <div className="flex gap-2">
                               <Button size="sm" variant="outline" className="flex-1">Edit</Button>
-                              <Button size="sm" variant="outline" className="flex-1">Manage</Button>
+
+                              {/* Manage button with calendar popover */}
+                              <div className="relative flex-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="w-full"
+                                  onClick={() =>
+                                    setManageOpenFor(manageOpenFor === item.id ? null : item.id)
+                                  }
+                                >
+                                  <CalendarOff size={14} className="mr-1.5" />
+                                  Manage
+                                </Button>
+                                {manageOpenFor === item.id && (
+                                  <UnavailabilityCalendar
+                                    itemId={item.id}
+                                    onClose={() => setManageOpenFor(null)}
+                                  />
+                                )}
+                              </div>
+
                             </div>
                           </div>
                         </div>
@@ -316,7 +552,6 @@ export function Profile() {
                               </p>
                             )}
 
-                            {/* Pending pickup — show pickup code */}
                             {rental.status === 'pending_pickup' && (
                               <div className="bg-black text-white rounded-lg p-3 mb-3 text-center">
                                 <p className="text-xs uppercase tracking-widest mb-1">Show to lender on pickup</p>
@@ -324,7 +559,6 @@ export function Profile() {
                               </div>
                             )}
 
-                            {/* In use — confirm return */}
                             {rental.status === 'in_use' && (
                               <div className="mb-3">
                                 <p className="text-xs text-gray-500 mb-2">Enter the code shown by the lender to confirm return:</p>
@@ -406,7 +640,6 @@ export function Profile() {
                               </p>
                             )}
 
-                            {/* Pending pickup — enter borrower's pickup code */}
                             {rental.status === 'pending_pickup' && (
                               <div className="mb-3">
                                 <p className="text-xs text-gray-500 mb-2">Enter the code shown by the borrower to confirm pickup:</p>
@@ -429,7 +662,6 @@ export function Profile() {
                               </div>
                             )}
 
-                            {/* In use — show return code */}
                             {rental.status === 'in_use' && rental.return_code && (
                               <div className="bg-black text-white rounded-lg p-3 mb-3 text-center">
                                 <p className="text-xs uppercase tracking-widest mb-1">Show to borrower on return</p>
