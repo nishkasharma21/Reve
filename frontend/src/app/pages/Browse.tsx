@@ -294,7 +294,7 @@ const filteredItems = useMemo(() => {
                   {filteredItems.map((item) => (
                     <Link
                       key={item.id}
-                      to={`/item/${item.id}`}
+                      to={`/items/${item.id}`}
                       className="group cursor-pointer"
                     >
                       <div className="aspect-[3/4] bg-white rounded-lg overflow-hidden mb-3 border border-gray-200">

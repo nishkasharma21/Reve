@@ -111,11 +111,9 @@ function UnavailabilityCalendar({
   const handleDayClick = (date: Date) => {
     if (isPast(date)) return;
     if (!isSelecting || !selStart) {
-      // Start new selection
       setSelecting({ start: date, end: null });
       setIsSelecting(true);
     } else {
-      // Complete selection
       setSelecting(prev => ({ ...prev, end: date }));
       setIsSelecting(false);
     }
@@ -143,7 +141,6 @@ function UnavailabilityCalendar({
         setError(data.error || "Failed to save");
         return;
       }
-      // Backend returns 201 with no block object — re-fetch to get the new id
       const refreshRes = await fetch(`${API_URL}/api/items/${itemId}`, { credentials: "include" });
       const refreshData = await refreshRes.json();
       onBlocksChanged(refreshData.unavailability_blocks || []);
@@ -330,7 +327,6 @@ export function Profile() {
   const [lentStatusFilter,     setLentStatusFilter]     = useState("all");
 
   const [manageOpenFor, setManageOpenFor] = useState<number | null>(null);
-  // blocksByItem[id] = Block[] if loaded, undefined if not yet fetched
   const [blocksByItem, setBlocksByItem] = useState<Record<number, Block[]>>({});
 
   const [pickupInput, setPickupInput] = useState<Record<number, string>>({});
@@ -364,7 +360,6 @@ export function Profile() {
 
   const openManage = async (itemId: number) => {
     setManageOpenFor(itemId);
-    // Always re-fetch so we show the latest blocks
     await fetchBlocksForItem(itemId);
   };
 
@@ -415,7 +410,6 @@ export function Profile() {
     } catch (err) { console.error(err); }
   };
 
-  // Derive availability: if blocks loaded locally use those, otherwise trust server value
   const getAvailable = (item: any): boolean => {
     if (item.id in blocksByItem) return isItemAvailableFromBlocks(blocksByItem[item.id]);
     return item.available;
@@ -519,7 +513,11 @@ export function Profile() {
                             <div className="flex-1">
                               <div className="flex justify-between items-start mb-2">
                                 <div>
-                                  <h3 className="font-bold mb-1">{item.item_name}</h3>
+                                  <h3 className="font-bold mb-1">
+                                    <Link to={`/items/${item.id}`} className="hover:underline">
+                                      {item.item_name}
+                                    </Link>
+                                  </h3>
                                   <p className="text-sm text-gray-600">Size {item.size}</p>
                                 </div>
                                 <Badge variant={available ? "secondary" : "destructive"}>
@@ -528,7 +526,7 @@ export function Profile() {
                               </div>
                               <p className="font-bold mb-3">${item.price_per_day}/day</p>
                               <div className="flex gap-2">
-                                <Link to={`/items/${item.id}`}><Button size="sm" variant="outline" className="w-full">Edit</Button></Link>
+                                <Link to={`/items/${item.id}?edit=true&ownerId=${user?.id}`}><Button size="sm" variant="outline" className="w-full">Edit</Button></Link>
                                 <div className="relative flex-1">
                                   <Button
                                     size="sm"
@@ -549,7 +547,6 @@ export function Profile() {
                                       blocks={blocks}
                                       onBlocksChanged={async (updated) => {
                                         setBlocksByItem(prev => ({ ...prev, [item.id]: updated }));
-                                        // Refresh items so server-side available flag stays in sync
                                         await refreshItems();
                                       }}
                                       onClose={() => setManageOpenFor(null)}
@@ -594,7 +591,11 @@ export function Profile() {
                         </div>
                         <div className="flex-1">
                           <div className="flex justify-between items-start mb-1">
-                            <h3 className="font-bold">{rental.item_name}</h3>
+                            <h3 className="font-bold">
+                              <Link to={`/items/${rental.item_id}`} className="hover:underline">
+                                {rental.item_name}
+                              </Link>
+                            </h3>
                             <span className={`text-xs font-medium px-2 py-1 rounded-full capitalize ${STATUS_COLORS[rental.status]}`}>{rental.status.replace("_", " ")}</span>
                           </div>
                           <p className="text-sm text-gray-600 mb-1">From: {rental.owner_name}</p>
@@ -658,7 +659,11 @@ export function Profile() {
                         </div>
                         <div className="flex-1">
                           <div className="flex justify-between items-start mb-1">
-                            <h3 className="font-bold">{rental.item_name}</h3>
+                            <h3 className="font-bold">
+                              <Link to={`/items/${rental.item_id}`} className="hover:underline">
+                                {rental.item_name}
+                              </Link>
+                            </h3>
                             <span className={`text-xs font-medium px-2 py-1 rounded-full capitalize ${STATUS_COLORS[rental.status]}`}>{rental.status.replace("_", " ")}</span>
                           </div>
                           <p className="text-sm text-gray-600 mb-1">Borrowed by: {rental.borrower_name}</p>

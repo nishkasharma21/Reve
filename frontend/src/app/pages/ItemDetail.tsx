@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router";
 import { Button } from "../components/ui/button";
 import { Calendar } from "../components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { Badge } from "../components/ui/badge";
 import { CalendarIcon, MapPin, User, ArrowLeft, Heart, MessageCircle, ExternalLink, Pencil, Check, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { format } from "date-fns";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 
@@ -18,9 +19,11 @@ export function ItemDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [item, setItem]       = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [item, setItem]         = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [loading, setLoading]   = useState(true);
+  const [searchParams] = useSearchParams();
+  const editParam = searchParams.get("edit") === "true";
 
   // Rental state
   const [startDate, setStartDate] = useState<Date>();
@@ -29,7 +32,7 @@ export function ItemDetail() {
   const [requesting, setRequesting] = useState(false);
 
   // Edit state
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(editParam);
   const [saving,    setSaving]    = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -44,12 +47,11 @@ export function ItemDetail() {
   });
 
   useEffect(() => {
-    // Fetch item and current user in parallel
     Promise.all([
       fetch(`${API_URL}/api/items/${id}`, { credentials: "include" }),
-      fetch(`${API_URL}/api/profile`,     { credentials: "include" }),
+      fetch(`${API_URL}/api/profile`, { credentials: "include" }),
     ])
-      .then(async ([itemRes, profileRes]) => {
+      .then(async ([itemRes, userRes]) => {
         if (!itemRes.ok) throw new Error("Not found");
         const itemData = await itemRes.json();
         setItem(itemData);
@@ -63,16 +65,17 @@ export function ItemDetail() {
           price_per_day: String(itemData.price_per_day ?? ""),
           link:          itemData.link          ?? "",
         });
-        if (profileRes.ok) {
-          const profile = await profileRes.json();
-          setCurrentUserId(profile.id);
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          setCurrentUser(userData);
         }
       })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [id]);
 
-  const isOwner = item && currentUserId && item.owner_id === currentUserId;
+  // Owner check: compare authenticated user's id against the item's owner_id
+  const isOwner = !!(currentUser && item && item.owner_id === currentUser.id);
 
   const handleField = (field: string, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -170,7 +173,6 @@ export function ItemDetail() {
 
   // ── Shared input classes ──────────────────────────────────────────────────
   const inputCls = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black";
-  const selectCls = inputCls;
 
   return (
     <div>
@@ -184,12 +186,6 @@ export function ItemDetail() {
           <div className="flex gap-2">
             {isEditing ? (
               <>
-                <Button size="sm" variant="outline" onClick={handleCancel} disabled={saving}>
-                  <X size={14} className="mr-1" />Cancel
-                </Button>
-                <Button size="sm" onClick={handleSave} disabled={saving}>
-                  <Check size={14} className="mr-1" />{saving ? "Saving…" : "Save Changes"}
-                </Button>
               </>
             ) : (
               <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>
@@ -218,7 +214,7 @@ export function ItemDetail() {
                 className="w-full h-full object-cover"
               />
             </div>
-            {!isOwner && (
+            {!isOwner && !isEditing && (
               <button
                 onClick={() => setIsLiked(!isLiked)}
                 className="absolute top-4 right-4 bg-white rounded-full p-3 shadow-lg hover:scale-110 transition-transform"
@@ -250,24 +246,30 @@ export function ItemDetail() {
                   <div className="grid grid-cols-3 gap-3">
                     <div>
                       <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1 block">Category</label>
-                      <select className={selectCls} value={form.category} onChange={e => handleField("category", e.target.value)}>
-                        <option value="">Select</option>
-                        {CATEGORIES.map(c => <option key={c}>{c}</option>)}
-                      </select>
+                      <Select value={form.category} onValueChange={v => handleField("category", v)}>
+                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                          {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1 block">Size</label>
-                      <select className={selectCls} value={form.size} onChange={e => handleField("size", e.target.value)}>
-                        <option value="">Select</option>
-                        {SIZES.map(s => <option key={s}>{s}</option>)}
-                      </select>
+                      <Select value={form.size} onValueChange={v => handleField("size", v)}>
+                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                          {SIZES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1 block">Condition</label>
-                      <select className={selectCls} value={form.condition} onChange={e => handleField("condition", e.target.value)}>
-                        <option value="">Select</option>
-                        {CONDITIONS.map(c => <option key={c}>{c}</option>)}
-                      </select>
+                      <Select value={form.condition} onValueChange={v => handleField("condition", v)}>
+                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                          {CONDITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   <div>
@@ -299,7 +301,7 @@ export function ItemDetail() {
             </div>
 
             {/* Owner Info */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            {!isEditing && <div className="bg-gray-50 rounded-lg p-4 mb-6">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
                   <User size={20} />
@@ -315,7 +317,7 @@ export function ItemDetail() {
                 <MapPin size={20} />
                 <span className="text-gray-600">Stanford</span>
               </div>
-            </div>
+            </div>}
 
             {/* Read-only details when not editing */}
             {!isEditing && (
@@ -331,8 +333,7 @@ export function ItemDetail() {
               </div>
             )}
 
-            {/* Rental section — only shown to non-owners */}
-            {!isOwner && (
+            {!isEditing && (
               <div className="border-t pt-6 mb-6">
                 <h3 className="font-bold text-sm uppercase tracking-wide mb-4">Select Rental Dates</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
