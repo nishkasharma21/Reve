@@ -12,11 +12,12 @@ const API_URL = import.meta.env.VITE_API_URL;
 const STATUS_COLORS: Record<string, string> = {
   pending_pickup: 'bg-yellow-100 text-yellow-800',
   in_use: 'bg-green-100 text-green-800',
+  overdue: 'bg-red-100 text-red-800',
   returned: 'bg-blue-100 text-blue-800',
   cancelled: 'bg-gray-100 text-gray-600',
 };
 
-const STATUS_FILTERS = ['all', 'pending_pickup', 'in_use', 'returned', 'cancelled'];
+const STATUS_FILTERS = ['all', 'pending_pickup', 'in_use', 'overdue', 'returned', 'cancelled'];
 
 interface Rental {
   id: number;
