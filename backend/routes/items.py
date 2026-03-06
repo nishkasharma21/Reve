@@ -90,7 +90,7 @@ def get_or_update_item(item_id):
 
     today = date.today()
 
-    # 🔹 DELETE expired blocks
+    # Delete expired manual blocks
     expired_blocks = ItemUnavailability.query.filter(
         ItemUnavailability.item_id == item_id,
         ItemUnavailability.end_date < today
@@ -101,14 +101,20 @@ def get_or_update_item(item_id):
 
     db.session.commit()
 
-    # check if currently blocked
+    # Check if currently blocked by a manual block
     active_block = ItemUnavailability.query.filter(
         ItemUnavailability.item_id == item_id,
         ItemUnavailability.start_date <= today,
         ItemUnavailability.end_date >= today
     ).first()
 
-    item.available = active_block is None
+    # Also check for active rentals as a safety net
+    active_rental = Rental.query.filter(
+        Rental.item_id == item_id,
+        Rental.status.in_(['pending_pickup', 'in_use'])
+    ).first()
+
+    item.available = (active_block is None) and (active_rental is None)
     db.session.commit()
 
     owner = User.query.get(item.owner_id)
@@ -153,7 +159,14 @@ def get_my_items():
             ItemUnavailability.start_date <= today,
             ItemUnavailability.end_date >= today
         ).first()
-        item.available = active_block is None
+
+        # Safety net: also check for active rentals in case a block was missed
+        active_rental = Rental.query.filter(
+            Rental.item_id == item.id,
+            Rental.status.in_(['pending_pickup', 'in_use'])
+        ).first()
+
+        item.available = (active_block is None) and (active_rental is None)
 
     db.session.commit()
 

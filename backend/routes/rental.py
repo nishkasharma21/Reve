@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, session, current_app
-from backend.models import Item, User, Rental
+from backend.models import Item, User, Rental, ItemUnavailability
 from backend.extensions import db
 from datetime import datetime
 import os
@@ -62,6 +62,9 @@ def create_rental():
     pickup_code = Rental.generate_code()
     return_code = Rental.generate_code()
 
+    start_date = data.get('start_date')
+    end_date = data.get('end_date')
+
     rental = Rental(
         item_id=item_id,
         borrower_id=user_id,
@@ -69,13 +72,20 @@ def create_rental():
         status='pending_pickup',
         pickup_code=pickup_code,
         return_code=return_code,
-        start_date=data.get('start_date'),
-        end_date=data.get('end_date'),
+        start_date=start_date,
+        end_date=end_date,
     )
 
     item.available = False
-
     db.session.add(rental)
+
+    # Create an unavailability block for the rental period so the
+    # block-based availability check in items.py stays in sync
+    if start_date and end_date:
+        start = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end   = datetime.strptime(end_date,   '%Y-%m-%d').date()
+        db.session.add(ItemUnavailability(item_id=item_id, start_date=start, end_date=end))
+
     db.session.commit()
 
     # Send email to lender
@@ -184,6 +194,16 @@ def confirm_return(rental_id):
         return jsonify({'error': 'Incorrect return code'}), 400
 
     rental.update_status('returned')
+
+    # Remove the rental's unavailability block and restore item availability
+    if rental.start_date and rental.end_date:
+        ItemUnavailability.query.filter_by(
+            item_id=rental.item_id,
+            start_date=rental.start_date,
+            end_date=rental.end_date,
+        ).delete()
+
+    rental.item.available = True
     db.session.commit()
 
     return jsonify({'success': True, 'status': 'returned'}), 200
@@ -204,6 +224,16 @@ def cancel_rental(rental_id):
         return jsonify({'error': 'Cannot cancel this rental'}), 400
 
     rental.update_status('cancelled')
+
+    # Remove the rental's unavailability block and restore item availability
+    if rental.start_date and rental.end_date:
+        ItemUnavailability.query.filter_by(
+            item_id=rental.item_id,
+            start_date=rental.start_date,
+            end_date=rental.end_date,
+        ).delete()
+
+    rental.item.available = True
     db.session.commit()
 
     return jsonify({'success': True, 'status': 'cancelled'}), 200
