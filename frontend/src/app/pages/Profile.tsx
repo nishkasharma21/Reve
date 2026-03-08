@@ -60,11 +60,13 @@ function UnavailabilityCalendar({
   blocks,
   onBlocksChanged,
   onClose,
+  lentRentals,
 }: {
   itemId: number;
   blocks: Block[];
   onBlocksChanged: (blocks: Block[]) => void;
   onClose: () => void;
+  lentRentals: Rental[];
 }) {
   const today = new Date(); today.setHours(0, 0, 0, 0);
 
@@ -196,6 +198,15 @@ function UnavailabilityCalendar({
             const end   = toDate(b.end_date);
             const now   = new Date(); now.setHours(0, 0, 0, 0);
             const active = start <= now && end >= now;
+
+            const isRentalBlock = lentRentals.some(r =>
+              r.item_id === itemId &&
+              r.status !== 'returned' &&
+              r.status !== 'cancelled' &&
+              r.start_date === b.start_date &&
+              r.end_date === b.end_date
+            );
+
             return (
               <div key={b.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-1.5">
                 <div className="flex items-center gap-2">
@@ -204,12 +215,11 @@ function UnavailabilityCalendar({
                     {fmt(start)} → {fmt(end)}
                   </span>
                 </div>
-                <button
-                  onClick={() => handleDelete(b.id)}
-                  className="text-gray-300 hover:text-red-500 transition-colors ml-2"
-                >
-                  <Trash2 size={13} />
-                </button>
+                {!isRentalBlock && (
+                  <button onClick={() => handleDelete(b.id)} className="text-gray-300 hover:text-red-500 transition-colors ml-2">
+                    <Trash2 size={13} />
+                  </button>
+                )}
               </div>
             );
           })}
@@ -372,7 +382,19 @@ export function Profile() {
         ]);
         if (!userRes.ok) throw new Error("Not authenticated");
         setUser(await userRes.json());
-        setItems(await itemsRes.json());
+        const fetchedItems = await itemsRes.json();
+        setItems(fetchedItems);
+
+        // ✅ Pre-fetch blocks for all items so availability badge is accurate
+        const blocksEntries = await Promise.all(
+          fetchedItems.map(async (item: any) => {
+            const res  = await fetch(`${API_URL}/api/items/${item.id}`, { credentials: "include" });
+            const data = await res.json();
+            return [item.id, data.unavailability_blocks || []] as [number, Block[]];
+          })
+        );
+        setBlocksByItem(Object.fromEntries(blocksEntries));
+
       } catch (err) { console.error(err); }
     };
     fetchAll();
@@ -411,7 +433,7 @@ export function Profile() {
   };
 
   const getAvailable = (item: any): boolean => {
-    if (item.id in blocksByItem) return isItemAvailableFromBlocks(blocksByItem[item.id]);
+    // if (item.id in blocksByItem) return isItemAvailableFromBlocks(blocksByItem[item.id]);
     return item.available;
   };
 
@@ -545,6 +567,7 @@ export function Profile() {
                                     <UnavailabilityCalendar
                                       itemId={item.id}
                                       blocks={blocks}
+                                      lentRentals={rentals.lent}  // ← add this
                                       onBlocksChanged={async (updated) => {
                                         setBlocksByItem(prev => ({ ...prev, [item.id]: updated }));
                                         await refreshItems();
@@ -600,7 +623,7 @@ export function Profile() {
                           </div>
                           <p className="text-sm text-gray-600 mb-1">From: {rental.owner_name}</p>
                           {rental.start_date && rental.end_date && (
-                            <p className="text-sm text-gray-600 mb-3">{new Date(rental.start_date).toLocaleDateString()} → {new Date(rental.end_date).toLocaleDateString()}</p>
+                            <p className="text-sm text-gray-600 mb-3">{new Date(rental.start_date + "T00:00:00").toLocaleDateString()} → {new Date(rental.end_date + "T00:00:00").toLocaleDateString()}</p>
                           )}
                           {rental.status === "pending_pickup" && (
                             <div className="bg-black text-white rounded-lg p-3 mb-3 text-center">
@@ -668,7 +691,7 @@ export function Profile() {
                           </div>
                           <p className="text-sm text-gray-600 mb-1">Borrowed by: {rental.borrower_name}</p>
                           {rental.start_date && rental.end_date && (
-                            <p className="text-sm text-gray-600 mb-3">{new Date(rental.start_date).toLocaleDateString()} → {new Date(rental.end_date).toLocaleDateString()}</p>
+                            <p className="text-sm text-gray-600 mb-3">{new Date(rental.start_date + "T00:00:00").toLocaleDateString()} → {new Date(rental.end_date + "T00:00:00").toLocaleDateString()}</p>
                           )}
                           {rental.status === "pending_pickup" && (
                             <div className="mb-3">
