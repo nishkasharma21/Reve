@@ -90,7 +90,7 @@ export function Footer() {
         </div>
 
         <div className="mt-8 pt-8 border-t border-gray-200 text-center text-sm text-gray-600">
-          © 2025 Campus Closet. All rights reserved.
+          © 2026 Campus Closet. All rights reserved.
         </div>
       </div>
     </footer>
