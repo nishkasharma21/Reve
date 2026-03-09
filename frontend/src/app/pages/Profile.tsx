@@ -50,7 +50,13 @@ const fmt    = (d: Date)   => d.toLocaleDateString("en-US", { month: "short", da
 
 function isItemAvailableFromBlocks(blocks: Block[]): boolean {
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  return !blocks.some(b => toDate(b.start_date) <= today && toDate(b.end_date) >= today);
+  const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+  return !blocks.some(b => {
+    const start = toDate(b.start_date);
+    const end   = toDate(b.end_date);
+    // Unavailable if today is within the block, OR today is the day before it starts
+    return (start <= today && end >= today) || start.getTime() === tomorrow.getTime();
+  });
 }
 
 // ─── Unavailability Calendar ──────────────────────────────────────────────────
@@ -433,7 +439,7 @@ export function Profile() {
   };
 
   const getAvailable = (item: any): boolean => {
-    // if (item.id in blocksByItem) return isItemAvailableFromBlocks(blocksByItem[item.id]);
+    if (item.id in blocksByItem) return isItemAvailableFromBlocks(blocksByItem[item.id]);
     return item.available;
   };
 
