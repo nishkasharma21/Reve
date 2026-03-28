@@ -1,5 +1,6 @@
 from functools import wraps
 from flask import session, jsonify
+from backend.models import Rental, ItemUnavailability
 
 
 def login_required(f):

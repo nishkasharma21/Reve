@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, session
-from backend.models import Item, User, Rental, ItemUnavailability
+from backend.models import Item, User, Rental
 from backend.extensions import db
 from backend.utils import login_required, serialize_item, is_item_available_on_date
 from datetime import date
