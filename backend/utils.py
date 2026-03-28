@@ -28,3 +28,19 @@ def serialize_item(item):
         "available": item.available,
         "created_at": item.created_at.isoformat(),
     }
+
+def is_item_available_on_date(item_id, check_date):
+    rental_conflict = Rental.query.filter(
+        Rental.item_id == item_id,
+        Rental.status.in_(['pending_pickup', 'in_use']),
+        Rental.start_date <= check_date,
+        Rental.end_date >= check_date
+    ).first()
+
+    block_conflict = ItemUnavailability.query.filter(
+        ItemUnavailability.item_id == item_id,
+        ItemUnavailability.start_date <= check_date,
+        ItemUnavailability.end_date >= check_date
+    ).first()
+
+    return rental_conflict is None and block_conflict is None

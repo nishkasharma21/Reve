@@ -50,6 +50,7 @@ export function Profile() {
 
   const [manageOpenFor, setManageOpenFor] = useState<number | null>(null);
   const [blocksByItem, setBlocksByItem] = useState<Record<number, Block[]>>({});
+  const [rentalsByItem, setRentalsByItem] = useState<Record<number, RentalRange[]>>({});
 
   const [pickupInput, setPickupInput] = useState<Record<number, string>>({});
   const [pickupError, setPickupError] = useState<Record<number, string>>({});
@@ -77,6 +78,7 @@ export function Profile() {
       const res  = await fetch(`${API_URL}/api/items/${itemId}`, { credentials: "include" });
       const data = await res.json();
       setBlocksByItem(prev => ({ ...prev, [itemId]: data.unavailability_blocks || [] }));
+      setRentalsByItem(prev => ({ ...prev, [itemId]: data.active_rentals || [] }));
     } catch (err) { console.error(err); }
   };
 
@@ -267,6 +269,7 @@ export function Profile() {
                                     <UnavailabilityCalendar
                                       itemId={item.id}
                                       blocks={blocks}
+                                      rentals={rentalsByItem[item.id] ?? []}
                                       onBlocksChanged={async (updated) => {
                                         setBlocksByItem(prev => ({ ...prev, [item.id]: updated }));
                                         await refreshItems();
