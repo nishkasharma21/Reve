@@ -75,6 +75,7 @@ def create_app():
             return jsonify({"error": "User not found"}), 404
 
         return jsonify({
+            "id": user_id,
             "email": user.email,
             "firstName": user.firstName,
             "lastName": user.lastName,

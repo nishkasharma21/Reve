@@ -39,7 +39,6 @@ class Item(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    
     item_name = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
     category = db.Column(db.String(50), nullable=False)
@@ -50,11 +49,22 @@ class Item(db.Model):
     condition = db.Column(db.String(50), nullable=False)
     price_per_day = db.Column(db.Integer, nullable=False)
     link = db.Column(db.Text)
-
     created_at = db.Column(db.DateTime, server_default=func.now())
+
+    unavailability_blocks = db.relationship('ItemUnavailability', backref='item', lazy=True)  # NEW
 
     def __repr__(self):
         return f'<Item {self.item_name}>'
+
+
+class ItemUnavailability(db.Model):  # NEW
+    __tablename__ = 'item_unavailability'
+
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('items.id'), nullable=False)
+    start_date = db.Column(db.Date, nullable=False)
+    end_date = db.Column(db.Date, nullable=False)
+    created_at = db.Column(db.DateTime, server_default=func.now())
 
 
 class Rental(db.Model):
