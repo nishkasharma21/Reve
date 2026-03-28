@@ -7,6 +7,7 @@ from backend.routes.user import user_bp
 from backend.models import User, Item, Rental
 from backend.routes.rental import rental_bp
 from backend.routes.items import items_bp
+from backend.routes.item_blocks import item_blocks_bp
 from flask_mail import Mail, Message
 import os
 from datetime import datetime
@@ -56,6 +57,7 @@ def create_app():
     app.register_blueprint(user_bp, url_prefix="/api/user")
     app.register_blueprint(rental_bp, url_prefix='/api')
     app.register_blueprint(items_bp, url_prefix='/api')
+    app.register_blueprint(item_blocks_bp, url_prefix='/api')
 
 
     # ── Routes ────────────────────────────────────────────────────────────────
