@@ -1,0 +1,30 @@
+from functools import wraps
+from flask import session, jsonify
+
+
+def login_required(f):
+    """Decorator that returns 401 if the user is not logged in."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('user_id'):
+            return jsonify({"error": "You must be logged in"}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+
+def serialize_item(item):
+    """Serialize an Item model to a dict. Used across items and browse routes."""
+    return {
+        "id": item.id,
+        "owner_id": item.owner_id,
+        "item_name": item.item_name,
+        "description": item.description,
+        "category": item.category,
+        "size": item.size,
+        "brand": item.brand,
+        "condition": item.condition,
+        "price_per_day": item.price_per_day,
+        "images": item.images,
+        "available": item.available,
+        "created_at": item.created_at.isoformat(),
+    }

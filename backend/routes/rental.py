@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, session, current_app
 from backend.models import Item, User, Rental
 from backend.extensions import db
-from datetime import datetime
+from backend.utils import login_required
 import os
 
 rental_bp = Blueprint('rental', __name__)
@@ -13,7 +13,7 @@ def send_rental_email(lender_email, lender_name, borrower_name, item_name):
         if not mail:
             print("❌ Flask-Mail not initialized")
             return False
-        
+
         from flask_mail import Message
         msg = Message(
             subject=f"{borrower_name} has rented your {item_name}",
@@ -43,15 +43,13 @@ def send_rental_email(lender_email, lender_name, borrower_name, item_name):
 
 
 @rental_bp.route('/rentals', methods=['POST'])
+@login_required
 def create_rental():
     user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({'error': 'Not authenticated'}), 401
-
     data = request.get_json()
     item_id = data.get('item_id')
 
-    item = Item.query.get(item_id)
+    item = db.session.get(Item, item_id)
     if not item:
         return jsonify({'error': 'Item not found'}), 404
     if item.owner_id == user_id:
@@ -74,13 +72,11 @@ def create_rental():
     )
 
     item.available = False
-
     db.session.add(rental)
     db.session.commit()
 
-    # Send email to lender
-    lender = User.query.get(item.owner_id)
-    borrower = User.query.get(user_id)
+    lender = db.session.get(User, item.owner_id)
+    borrower = db.session.get(User, user_id)
     send_rental_email(
         lender_email=lender.email,
         lender_name=lender.firstName,
@@ -96,16 +92,12 @@ def create_rental():
 
 
 @rental_bp.route('/rentals', methods=['GET'])
+@login_required
 def get_rentals():
     user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({'error': 'Not authenticated'}), 401
 
-    borrowed = Rental.query.filter_by(borrower_id=user_id)\
-        .order_by(Rental.created_at.desc()).all()
-
-    lent = Rental.query.filter_by(owner_id=user_id)\
-        .order_by(Rental.created_at.desc()).all()
+    borrowed = Rental.query.filter_by(borrower_id=user_id).order_by(Rental.created_at.desc()).all()
+    lent = Rental.query.filter_by(owner_id=user_id).order_by(Rental.created_at.desc()).all()
 
     def serialize_borrowed(r):
         return {
@@ -142,12 +134,10 @@ def get_rentals():
 
 
 @rental_bp.route('/rentals/<int:rental_id>/confirm-pickup', methods=['POST'])
+@login_required
 def confirm_pickup(rental_id):
     user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({'error': 'Not authenticated'}), 401
-
-    rental = Rental.query.get(rental_id)
+    rental = db.session.get(Rental, rental_id)
     if not rental:
         return jsonify({'error': 'Rental not found'}), 404
     if rental.owner_id != user_id:
@@ -161,17 +151,14 @@ def confirm_pickup(rental_id):
 
     rental.update_status('in_use')
     db.session.commit()
-
     return jsonify({'success': True, 'status': 'in_use'}), 200
 
 
 @rental_bp.route('/rentals/<int:rental_id>/confirm-return', methods=['POST'])
+@login_required
 def confirm_return(rental_id):
     user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({'error': 'Not authenticated'}), 401
-
-    rental = Rental.query.get(rental_id)
+    rental = db.session.get(Rental, rental_id)
     if not rental:
         return jsonify({'error': 'Rental not found'}), 404
     if rental.borrower_id != user_id:
@@ -185,17 +172,14 @@ def confirm_return(rental_id):
 
     rental.update_status('returned')
     db.session.commit()
-
     return jsonify({'success': True, 'status': 'returned'}), 200
 
 
 @rental_bp.route('/rentals/<int:rental_id>/cancel', methods=['PATCH'])
+@login_required
 def cancel_rental(rental_id):
     user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({'error': 'Not authenticated'}), 401
-
-    rental = Rental.query.get(rental_id)
+    rental = db.session.get(Rental, rental_id)
     if not rental:
         return jsonify({'error': 'Rental not found'}), 404
     if rental.owner_id != user_id:
@@ -205,5 +189,4 @@ def cancel_rental(rental_id):
 
     rental.update_status('cancelled')
     db.session.commit()
-
     return jsonify({'success': True, 'status': 'cancelled'}), 200

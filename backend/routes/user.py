@@ -1,102 +1,55 @@
+import traceback
 from flask import Blueprint, request, jsonify, session
 from backend.models import User
 from backend.extensions import db
-import os
 
 user_bp = Blueprint('user', __name__)
+
+
+def _build_user(email, first_name, last_name, data):
+    """Construct a User instance from common onboarding fields."""
+    return User(
+        email=email,
+        firstName=first_name,
+        lastName=last_name,
+        dorm_location=data.get('dorm_location'),
+        topStyle=data.get('topStyle'),
+        bottomStyle=data.get('bottomStyle'),
+        height=data.get('height'),
+        weight=data.get('weight'),
+        profile_pic=data.get('profile_pic'),
+    )
+
+
+def _get_user_by_email(email):
+    return User.query.filter_by(email=email).first()
+
 
 @user_bp.route('/complete-onboarding', methods=['POST'])
 def complete_onboarding():
     email = session.get('samlNameId')
-    first_name = session.get('firstName')
-    last_name = session.get('lastName')
-    
-    print(f"DEBUG: email={email}, firstName={first_name}, lastName={last_name}")
-
     if not email:
         return jsonify({'error': 'Not authenticated'}), 401
-    
+
+    existing = _get_user_by_email(email)
+    if existing:
+        session['user_id'] = existing.id
+        return jsonify({'success': True}), 200
+
     data = request.get_json()
-    print(f"DEBUG: received data={data}")
-
     try:
-        # Handle case where user already exists
-        existing_user = User.query.filter_by(email=email).first()
-        if existing_user:
-            session['user_id'] = existing_user.id
-            return jsonify({'success': True}), 200
-
-        new_user = User(
+        new_user = _build_user(
             email=email,
-            firstName=first_name,
-            lastName=last_name,
-            dorm_location=data.get('dorm_location'),
-            topStyle=data.get('topStyle'),
-            bottomStyle=data.get('bottomStyle'),
-            height=data.get('height'),
-            weight=data.get('weight'),
-            profile_pic=data.get('profile_pic')
+            first_name=session.get('firstName'),
+            last_name=session.get('lastName'),
+            data=data,
         )
         db.session.add(new_user)
         db.session.commit()
         session['user_id'] = new_user.id
-        
         return jsonify({'success': True}), 200
-    
-    except Exception as e:
-        print(f"ERROR: {type(e).__name__}: {str(e)}")
-        import traceback
-        print(traceback.format_exc())
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
 
-        
-@user_bp.route('/test-onboarding', methods=['POST'])
-def test_onboarding():
-    if not os.getenv('ENABLE_MOCK_LOGIN'):
-        return jsonify({'error': 'Not allowed'}), 403
-    
-    # Get email from request instead of session
-    data = request.get_json()
-    email = data.get('test_email', 'test@stanford.edu')
-    first_name = data.get('firstName', 'Test')
-    last_name = data.get('lastName', 'User')
-    
-    try:
-        # Check if user already exists
-        existing = User.query.filter_by(email=email).first()
-        if existing:
-            return jsonify({'error': 'User already exists', 'user': {
-                'email': existing.email,
-                'firstName': existing.firstName
-            }}), 400
-        
-        new_user = User(
-            email=email,
-            firstName=first_name,
-            lastName=last_name,
-            dorm_location=data.get('dorm_location'),
-            topStyle=data.get('topStyle'),
-            bottomStyle=data.get('bottomStyle'),
-            height=data.get('height'),
-            weight=data.get('weight'),
-            profile_pic=data.get('profile_pic')
-        )
-        db.session.add(new_user)
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'user': {
-                'id': new_user.id,
-                'email': new_user.email,
-                'firstName': new_user.firstName,
-                'lastName': new_user.lastName,
-                'dorm_location': new_user.dorm_location,
-                'topStyle': new_user.topStyle,
-            }
-        }), 200
-    
     except Exception as e:
         db.session.rollback()
+        print(traceback.format_exc())
         return jsonify({'error': str(e)}), 500

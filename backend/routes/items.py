@@ -1,29 +1,17 @@
-
 from flask import Blueprint, request, jsonify, session
 from backend.models import Item, User, Rental
 from backend.extensions import db
-from datetime import datetime
+from backend.utils import login_required, serialize_item
 
 items_bp = Blueprint('items', __name__)
 
+
 @items_bp.route('/items', methods=['POST', 'GET'])
-def create_item():
+def handle_items():
     # GET
     if request.method == 'GET':
         items = Item.query.filter_by(available=True).order_by(Item.created_at.desc()).all()
-        return jsonify([{
-            "id": item.id,
-            "item_name": item.item_name,
-            "description": item.description,
-            "category": item.category,
-            "size": item.size,
-            "brand": item.brand,
-            "condition": item.condition,
-            "price_per_day": item.price_per_day,
-            "images": item.images,
-            "available": item.available,
-            "created_at": item.created_at.isoformat()
-        } for item in items])
+        return jsonify([serialize_item(item) for item in items])
 
     # POST
     user_id = session.get('user_id')
@@ -56,81 +44,37 @@ def create_item():
         db.session.rollback()
         print(f"Error creating item: {str(e)}")
         return jsonify({"error": "Could not create item. Check all fields."}), 400
-    
+
+
 @items_bp.route('/items/<int:item_id>', methods=['GET'])
 def get_item(item_id):
-    item = Item.query.get(item_id)
+    item = db.session.get(Item, item_id)
     if not item:
         return jsonify({'error': 'Not found'}), 404
-    
-    owner = User.query.get(item.owner_id)
+
+    owner = db.session.get(User, item.owner_id)
     return jsonify({
-        'id': item.id,
-        'item_name': item.item_name,
-        'description': item.description,
-        'category': item.category,
-        'size': item.size,
-        'images': item.images,
-        'available': item.available,
-        "link": item.link,
-        'brand': item.brand,
-        'condition': item.condition,
-        'price_per_day': item.price_per_day,
-        'owner_id': item.owner_id,
+        **serialize_item(item),
+        'link': item.link,
         'owner_name': f"{owner.firstName} {owner.lastName}",
     }), 200
 
+
 @items_bp.route('/my-items', methods=['GET'])
+@login_required
 def get_my_items():
     user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({"error": "You must be logged in"}), 401
-    
-    # Get all items where owner_id matches the current user
     items = Item.query.filter_by(owner_id=user_id).order_by(Item.created_at.desc()).all()
-    
-    return jsonify([{
-        "id": item.id,
-        "owner_id": item.owner_id,
-        "item_name": item.item_name,
-        "description": item.description,
-        "category": item.category,
-        "size": item.size,
-        "brand": item.brand,
-        "condition": item.condition,
-        "price_per_day": item.price_per_day,
-        "images": item.images,
-        "available": item.available,
-        "created_at": item.created_at.isoformat()
-    } for item in items])
+    return jsonify([serialize_item(item) for item in items])
+
 
 @items_bp.route('/browse-items', methods=['GET'])
 def get_browse_items():
     user_id = session.get('user_id')
-    
-    # Get all available items NOT owned by current user and NOT currently borrowed
+
+    query = Item.query.filter(Item.available == True)
     if user_id:
-        items = Item.query.filter(
-            Item.available == True,
-            Item.owner_id != user_id,
-        ).order_by(Item.created_at.desc()).all()
-    else:
-        # If not logged in, show all items except borrowed ones
-        items = Item.query.filter(
-            Item.available == True,
-        ).order_by(Item.created_at.desc()).all()
-    
-    return jsonify([{
-        "id": item.id,
-        "owner_id": item.owner_id,
-        "item_name": item.item_name,
-        "description": item.description,
-        "category": item.category,
-        "size": item.size,
-        "brand": item.brand,
-        "condition": item.condition,
-        "price_per_day": item.price_per_day,
-        "images": item.images,
-        "available": item.available,
-        "created_at": item.created_at.isoformat()
-    } for item in items])
+        query = query.filter(Item.owner_id != user_id)
+
+    items = query.order_by(Item.created_at.desc()).all()
+    return jsonify([serialize_item(item) for item in items])
