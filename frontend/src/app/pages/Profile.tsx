@@ -400,7 +400,7 @@ export function Profile() {
                           </div>
                           <p className="text-sm text-gray-600 mb-1">Borrowed by: {rental.borrower_name}</p>
                           {rental.start_date && rental.end_date && (
-                            <p className="text-sm text-gray-600 mb-3">{new Date(rental.start_date).toLocaleDateString()} → {new Date(rental.end_date).toLocaleDateString()}</p>
+                            <p className="text-sm text-gray-600 mb-3">{formatDate(rental.start_date)} → {formatDate(rental.end_date)}</p>
                           )}
                           {rental.status === "pending_pickup" && (
                             <div className="mb-3">
