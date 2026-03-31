@@ -8,6 +8,7 @@ import { CalendarIcon, MapPin, User, ArrowLeft, Heart, MessageCircle, ExternalLi
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { format } from "date-fns";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { toast } from "sonner";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -34,7 +35,6 @@ export function ItemDetail() {
   // Edit state
   const [isEditing, setIsEditing] = useState(editParam);
   const [saving,    setSaving]    = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
   const [form, setForm] = useState({
     item_name:     "",
     description:   "",
@@ -79,12 +79,10 @@ export function ItemDetail() {
 
   const handleField = (field: string, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
-    setSaveError(null);
   };
 
   const handleSave = async () => {
     setSaving(true);
-    setSaveError(null);
     try {
       const res = await fetch(`${API_URL}/api/items/${id}`, {
         method: "PATCH",
@@ -100,12 +98,13 @@ export function ItemDetail() {
         const refreshed = await fetch(`${API_URL}/api/items/${id}`, { credentials: "include" });
         setItem(await refreshed.json());
         setIsEditing(false);
+        toast.success("Item saved successfully!");
       } else {
         const err = await res.json();
-        setSaveError(err.error || "Failed to save");
+        toast.error(err.error || "Failed to save");
       }
     } catch (e) {
-      setSaveError("Network error");
+      toast.error("Network error. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -123,7 +122,6 @@ export function ItemDetail() {
       price_per_day: String(item.price_per_day ?? ""),
       link:          item.link          ?? "",
     });
-    setSaveError(null);
     setIsEditing(false);
   };
 
@@ -142,11 +140,11 @@ export function ItemDetail() {
         }),
       });
       if (res.ok) {
-        alert("Successfully rented item!");
-        navigate("/profile");
+        toast.success("Rental requested successfully!");
+        navigate("/profile?tab=borrowed");
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to rent item");
+        toast.error(err.error || "Failed to rent item");
       }
     } catch (e) {
       console.error(e);
@@ -196,11 +194,6 @@ export function ItemDetail() {
         )}
       </div>
 
-      {saveError && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4">
-          <p className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-4 py-2">{saveError}</p>
-        </div>
-      )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">

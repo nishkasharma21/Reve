@@ -61,33 +61,16 @@ export function EditProfile() {
     fetchProfile();
   }, []);
 
-  const [imageUploading, setImageUploading] = useState(false);
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-
-    setImageUploading(true);
-    try {
-      const data = new FormData();
-      data.append("file", file);
-      data.append("upload_preset", "goreve");
-
-      const res = await fetch("https://api.cloudinary.com/v1_1/dvwjl1ibc/image/upload", {
-        method: "POST",
-        body: data,
-      });
-
-      if (!res.ok) throw new Error("Upload failed");
-
-      const result = await res.json();
-      setPreviewImage(result.secure_url);
-      setFormData(prev => ({ ...prev, profile_pic: result.secure_url }));
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to upload image. Please try again.");
-    } finally {
-      setImageUploading(false);
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setPreviewImage(result);
+        setFormData(prev => ({ ...prev, profile_pic: result }));
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -160,15 +143,10 @@ export function EditProfile() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => !imageUploading && fileInputRef.current?.click()}
-                    className="absolute bottom-0 right-0 bg-black text-white rounded-full p-3 hover:bg-gray-800 transition-colors disabled:opacity-50"
-                    disabled={imageUploading}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 bg-black text-white rounded-full p-3 hover:bg-gray-800 transition-colors"
                   >
-                    {imageUploading ? (
-                      <span className="text-xs">...</span>
-                    ) : (
-                      <Camera size={18} />
-                    )}
+                    <Camera size={18} />
                   </button>
                   <input
                     ref={fileInputRef}
@@ -181,8 +159,8 @@ export function EditProfile() {
                 <div>
                   <h3 className="font-medium mb-1">Upload new photo</h3>
                   <p className="text-sm text-gray-600 mb-3">JPG, PNG or GIF. Max size 5MB.</p>
-                  <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={imageUploading}>
-                    {imageUploading ? "Uploading..." : "Choose File"}
+                  <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                    Choose File
                   </Button>
                 </div>
               </div>
@@ -198,26 +176,37 @@ export function EditProfile() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="firstName">
+                    First Name
+                    <span className="inline-flex items-center ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                      <Shield size={12} className="mr-1" />
+                      SSO Protected
+                    </span>
+                  </Label>
                   <Input
                     id="firstName"
                     value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    placeholder="First name"
-                    required
+                    disabled
+                    className="bg-gray-50 cursor-not-allowed"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="lastName">
+                    Last Name
+                    <span className="inline-flex items-center ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                      <Shield size={12} className="mr-1" />
+                      SSO Protected
+                    </span>
+                  </Label>
                   <Input
                     id="lastName"
                     value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    placeholder="Last name"
-                    required
+                    disabled
+                    className="bg-gray-50 cursor-not-allowed"
                   />
                 </div>
               </div>
+              <p className="text-xs text-gray-500">Your name is managed through SSO and cannot be changed here</p>
 
               <div className="space-y-2">
                 <Label htmlFor="email">
