@@ -9,7 +9,7 @@ import {
   ArrowDownToLine, CalendarOff
 } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
-import { UnavailabilityCalendar, Block, toDate, isItemAvailableFromBlocks } from "./unavailabilitycalendar";
+import { UnavailabilityCalendar, Block, toDate, isItemAvailableFromBlocks, RentalRange } from "./unavailabilitycalendar";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -141,11 +141,6 @@ export function Profile() {
     } catch (err) { console.error(err); }
   };
 
-  const getAvailable = (item: any): boolean => {
-    if (item.id in blocksByItem) return isItemAvailableFromBlocks(blocksByItem[item.id]);
-    return item.available;
-  };
-
   if (!user) return <LoadingSpinner />;
 
   const formattedJoinDate = new Date(user.joinDate).toLocaleDateString("en-US", {
@@ -232,8 +227,8 @@ export function Profile() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {items.map((item) => {
-                    const available = getAvailable(item);
-                    const blocks    = blocksByItem[item.id] ?? [];
+                    const available = item.available;
+                    const blocks = blocksByItem[item.id] ?? [];
                     return (
                       <Card key={item.id}>
                         <CardContent className="p-4">
