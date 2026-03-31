@@ -100,8 +100,6 @@ class Rental(db.Model):
 
     def update_status(self, new_status):
         self.status = new_status
-        if new_status in ('returned', 'cancelled'):
-            self.item.available = True
 
     def __repr__(self):
         return f'<Rental {self.id} - {self.status}>'
