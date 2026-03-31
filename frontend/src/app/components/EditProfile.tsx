@@ -198,26 +198,37 @@ export function EditProfile() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="firstName">
+                    First Name
+                    <span className="inline-flex items-center ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                      <Shield size={12} className="mr-1" />
+                      SSO Protected
+                    </span>
+                  </Label>
                   <Input
                     id="firstName"
                     value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    placeholder="First name"
-                    required
+                    disabled
+                    className="bg-gray-50 cursor-not-allowed"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="lastName">
+                    Last Name
+                    <span className="inline-flex items-center ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                      <Shield size={12} className="mr-1" />
+                      SSO Protected
+                    </span>
+                  </Label>
                   <Input
                     id="lastName"
                     value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    placeholder="Last name"
-                    required
+                    disabled
+                    className="bg-gray-50 cursor-not-allowed"
                   />
                 </div>
               </div>
+              <p className="text-xs text-gray-500">Your name is managed through SSO and cannot be changed here</p>
 
               <div className="space-y-2">
                 <Label htmlFor="email">
