@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { UnavailabilityCalendar, Block, toDate, isItemAvailableFromBlocks } from "./unavailabilitycalendar";
+import { EditProfile } from "../components/EditProfile";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -186,8 +187,10 @@ export function Profile() {
                   <span className="font-bold">{rentals.lent.filter(r => r.status === "in_use").length}</span>
                 </div>
               </div>
-              <Button variant="outline" className="w-full mt-6">
-                <Edit size={16} className="mr-2" />Edit Profile
+              <Button variant="outline" className="w-full mt-6" asChild>
+                <Link to="/profile/edit">
+                  <Edit size={16} className="mr-2" />Edit Profile
+                </Link>
               </Button>
             </CardContent>
           </Card>
