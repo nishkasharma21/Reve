@@ -12,6 +12,7 @@ import { HowItWorks } from './pages/HowItWorks';
 import { Layout } from './Layout';
 import { useAuth } from '../contexts/AuthContexts';
 import { LoadingSpinner } from './components/LoadingSpinner';
+import { EditProfile } from "./components/EditProfile";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -58,6 +59,10 @@ export const router = createBrowserRouter([
       {
         path: '/profile',
         Component: Profile,
+      },
+      {
+        path: '/profile/edit',
+        Component: EditProfile,
       },
       {
         path: '/messages/:conversationId?',
