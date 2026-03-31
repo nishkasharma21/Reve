@@ -65,9 +65,8 @@ def create_app():
     def home():
         return "Hello, Flask!"
 
-    @app.route("/api/profile")
-    def get_current_user():
-        print(f"[DEBUG] session in profile: {dict(session)}")
+    @app.route("/api/profile", methods=["GET", "PUT"])
+    def profile():
         user_id = session.get('user_id')
         if not user_id:
             return jsonify({"error": "Not authenticated"}), 401
@@ -76,12 +75,44 @@ def create_app():
         if not user:
             return jsonify({"error": "User not found"}), 404
 
+        if request.method == "PUT":
+            data = request.get_json()
+            if not data:
+                return jsonify({"error": "No data provided"}), 400
+
+            if "firstName" in data:
+                user.firstName = data["firstName"]
+            if "lastName" in data:
+                user.lastName = data["lastName"]
+            if "profile_pic" in data:
+                user.profile_pic = data["profile_pic"]
+            if "dorm_location" in data:
+                user.dorm_location = data["dorm_location"]
+            if "topStyle" in data:
+                user.topStyle = data["topStyle"]
+            if "bottomStyle" in data:
+                user.bottomStyle = data["bottomStyle"]
+            if "height" in data:
+                user.height = data["height"]
+            if "weight" in data:
+                user.weight = data["weight"]
+
+            db.session.commit()
+            return jsonify({"message": "Profile updated successfully"}), 200
+
+        # GET
         return jsonify({
-            "id": user_id,
+            "id": user.id,
             "email": user.email,
             "firstName": user.firstName,
             "lastName": user.lastName,
-            "joinDate": user.created_at.isoformat()
+            "profile_pic": user.profile_pic,
+            "dorm_location": user.dorm_location,
+            "topStyle": user.topStyle,
+            "bottomStyle": user.bottomStyle,
+            "height": user.height,
+            "weight": user.weight,
+            "joinDate": user.created_at.isoformat(),
         })
         
     @app.after_request
