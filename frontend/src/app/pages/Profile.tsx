@@ -137,7 +137,10 @@ export function Profile() {
   const handleCancelRental = async (rentalId: number) => {
     try {
       const res = await fetch(`${API_URL}/api/rentals/${rentalId}/cancel`, { method: "PATCH", credentials: "include" });
-      if (res.ok) fetchRentals();
+      if (res.ok) {
+        fetchRentals();
+        refreshItems();
+      }
     } catch (err) { console.error(err); }
   };
 
