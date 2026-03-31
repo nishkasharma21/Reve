@@ -95,7 +95,6 @@ export function EditProfile() {
       });
       if (!res.ok) throw new Error("Failed to update profile");
       toast.success("Profile updated successfully!");
-      navigate("/profile");
     } catch (err) {
       console.error(err);
       toast.error("Failed to save changes. Please try again.");
@@ -299,7 +298,6 @@ export function EditProfile() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate("/profile")}
               size="lg"
               disabled={saving}
             >
