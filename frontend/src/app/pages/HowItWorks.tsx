@@ -39,7 +39,7 @@ export function HowItWorks() {
                 <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
                   <Handshake size={32} className="text-purple-600" />
                 </div>
-                <h3 className="text-xl font-bold mb-3">2. Request to Rent</h3>
+                <h3 className="text-xl font-bold mb-3">2. Rent Item</h3>
                 <p className="text-gray-600">
                   Pick your dates and send a rental request. Connect with the
                   owner to arrange pickup on campus.

@@ -372,7 +372,7 @@ export function ItemDetail() {
                 <Button size="lg" className="w-full"
                   disabled={!startDate || !endDate || requesting}
                   onClick={handleRequestToRent}>
-                  {requesting ? "Sending..." : "Request to Rent"}
+                  {requesting ? "Sending..." : "Rent Item"}
                 </Button>
                 <p className="text-xs text-gray-500 text-center mt-2">Meet on campus for pickup and return</p>
               </div>
