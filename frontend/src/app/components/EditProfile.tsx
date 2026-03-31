@@ -61,16 +61,33 @@ export function EditProfile() {
     fetchProfile();
   }, []);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [imageUploading, setImageUploading] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setPreviewImage(result);
-        setFormData(prev => ({ ...prev, profile_pic: result }));
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    setImageUploading(true);
+    try {
+      const data = new FormData();
+      data.append("file", file);
+      data.append("upload_preset", "goreve");
+
+      const res = await fetch("https://api.cloudinary.com/v1_1/dvwjl1ibc/image/upload", {
+        method: "POST",
+        body: data,
+      });
+
+      if (!res.ok) throw new Error("Upload failed");
+
+      const result = await res.json();
+      setPreviewImage(result.secure_url);
+      setFormData(prev => ({ ...prev, profile_pic: result.secure_url }));
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to upload image. Please try again.");
+    } finally {
+      setImageUploading(false);
     }
   };
 
@@ -143,10 +160,15 @@ export function EditProfile() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-0 right-0 bg-black text-white rounded-full p-3 hover:bg-gray-800 transition-colors"
+                    onClick={() => !imageUploading && fileInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 bg-black text-white rounded-full p-3 hover:bg-gray-800 transition-colors disabled:opacity-50"
+                    disabled={imageUploading}
                   >
-                    <Camera size={18} />
+                    {imageUploading ? (
+                      <span className="text-xs">...</span>
+                    ) : (
+                      <Camera size={18} />
+                    )}
                   </button>
                   <input
                     ref={fileInputRef}
@@ -159,8 +181,8 @@ export function EditProfile() {
                 <div>
                   <h3 className="font-medium mb-1">Upload new photo</h3>
                   <p className="text-sm text-gray-600 mb-3">JPG, PNG or GIF. Max size 5MB.</p>
-                  <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                    Choose File
+                  <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={imageUploading}>
+                    {imageUploading ? "Uploading..." : "Choose File"}
                   </Button>
                 </div>
               </div>
