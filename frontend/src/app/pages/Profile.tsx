@@ -9,7 +9,7 @@ import {
   ArrowDownToLine, CalendarOff
 } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
-import { UnavailabilityCalendar, Block, toDate, isItemAvailableFromBlocks } from "./unavailabilitycalendar";
+import { UnavailabilityCalendar, Block, toDate, isItemAvailableFromBlocks, RentalRange } from "./unavailabilitycalendar";
 import { EditProfile } from "../components/EditProfile";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -51,6 +51,7 @@ export function Profile() {
 
   const [manageOpenFor, setManageOpenFor] = useState<number | null>(null);
   const [blocksByItem, setBlocksByItem] = useState<Record<number, Block[]>>({});
+  const [rentalsByItem, setRentalsByItem] = useState<Record<number, RentalRange[]>>({});
 
   const [pickupInput, setPickupInput] = useState<Record<number, string>>({});
   const [pickupError, setPickupError] = useState<Record<number, string>>({});
@@ -63,6 +64,13 @@ export function Profile() {
       if (!res.ok) throw new Error("Failed to fetch rentals");
       setRentals(await res.json());
     } catch (err) { console.error(err); }
+  };
+
+  const formatDate = (dateStr: string) => {
+    const [year, month, day] = dateStr.split("-");
+    return new Date(+year, +month - 1, +day).toLocaleDateString("en-US", {
+      day: "2-digit", month: "2-digit", year: "numeric"
+    });
   };
 
   const refreshItems = async () => {
@@ -78,6 +86,7 @@ export function Profile() {
       const res  = await fetch(`${API_URL}/api/items/${itemId}`, { credentials: "include" });
       const data = await res.json();
       setBlocksByItem(prev => ({ ...prev, [itemId]: data.unavailability_blocks || [] }));
+      setRentalsByItem(prev => ({ ...prev, [itemId]: data.active_rentals || [] }));
     } catch (err) { console.error(err); }
   };
 
@@ -129,13 +138,11 @@ export function Profile() {
   const handleCancelRental = async (rentalId: number) => {
     try {
       const res = await fetch(`${API_URL}/api/rentals/${rentalId}/cancel`, { method: "PATCH", credentials: "include" });
-      if (res.ok) fetchRentals();
+      if (res.ok) {
+        fetchRentals();
+        refreshItems();
+      }
     } catch (err) { console.error(err); }
-  };
-
-  const getAvailable = (item: any): boolean => {
-    if (item.id in blocksByItem) return isItemAvailableFromBlocks(blocksByItem[item.id]);
-    return item.available;
   };
 
   if (!user) return <LoadingSpinner />;
@@ -226,8 +233,8 @@ export function Profile() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {items.map((item) => {
-                    const available = getAvailable(item);
-                    const blocks    = blocksByItem[item.id] ?? [];
+                    const available = item.available;
+                    const blocks = blocksByItem[item.id] ?? [];
                     return (
                       <Card key={item.id}>
                         <CardContent className="p-4">
@@ -270,6 +277,7 @@ export function Profile() {
                                     <UnavailabilityCalendar
                                       itemId={item.id}
                                       blocks={blocks}
+                                      rentals={rentalsByItem[item.id] ?? []}
                                       onBlocksChanged={async (updated) => {
                                         setBlocksByItem(prev => ({ ...prev, [item.id]: updated }));
                                         await refreshItems();
@@ -325,7 +333,7 @@ export function Profile() {
                           </div>
                           <p className="text-sm text-gray-600 mb-1">From: {rental.owner_name}</p>
                           {rental.start_date && rental.end_date && (
-                            <p className="text-sm text-gray-600 mb-3">{new Date(rental.start_date).toLocaleDateString()} → {new Date(rental.end_date).toLocaleDateString()}</p>
+                            <p className="text-sm text-gray-600 mb-3">{formatDate(rental.start_date)} → {formatDate(rental.end_date)}</p>
                           )}
                           {rental.status === "pending_pickup" && (
                             <div className="bg-black text-white rounded-lg p-3 mb-3 text-center">
@@ -393,7 +401,7 @@ export function Profile() {
                           </div>
                           <p className="text-sm text-gray-600 mb-1">Borrowed by: {rental.borrower_name}</p>
                           {rental.start_date && rental.end_date && (
-                            <p className="text-sm text-gray-600 mb-3">{new Date(rental.start_date).toLocaleDateString()} → {new Date(rental.end_date).toLocaleDateString()}</p>
+                            <p className="text-sm text-gray-600 mb-3">{formatDate(rental.start_date)} → {formatDate(rental.end_date)}</p>
                           )}
                           {rental.status === "pending_pickup" && (
                             <div className="mb-3">

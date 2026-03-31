@@ -10,6 +10,11 @@ export interface Block {
   end_date: string;   // "YYYY-MM-DD"
 }
 
+export interface RentalRange {
+  start_date: string;
+  end_date: string;
+}
+
 export const toDate = (s: string) => new Date(s + "T00:00:00");
 export const toISO  = (d: Date)   => d.toISOString().split("T")[0];
 export const fmt    = (d: Date)   => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -22,11 +27,13 @@ export function isItemAvailableFromBlocks(blocks: Block[]): boolean {
 export function UnavailabilityCalendar({
   itemId,
   blocks,
+  rentals = [],
   onBlocksChanged,
   onClose,
 }: {
   itemId: number;
   blocks: Block[];
+  rentals?: RentalRange[];
   onBlocksChanged: (blocks: Block[]) => void;
   onClose: () => void;
 }) {
@@ -71,6 +78,9 @@ export function UnavailabilityCalendar({
   const isSelEnd    = (d: Date) => !!hi && hi.toDateString() === d.toDateString() && lo?.toDateString() !== hi.toDateString();
   const isInSelRange = (d: Date) => !!(lo && hi && d > lo && d < hi);
   const isPast      = (d: Date) => d < today;
+
+  const isInRental = (d: Date) =>
+    rentals.some(r => toDate(r.start_date) <= d && toDate(r.end_date) >= d);
 
   const handleDayClick = (date: Date) => {
     if (isPast(date)) return;
@@ -218,7 +228,7 @@ export function UnavailabilityCalendar({
           return (
             <button
               key={date.toDateString()}
-              disabled={past}
+              disabled={past || isInRental(date) || isInExistingBlock(date)}   
               onClick={() => handleDayClick(date)}
               onMouseEnter={() => handleMouseEnter(date)}
               className={[
@@ -230,6 +240,8 @@ export function UnavailabilityCalendar({
                   ? "bg-gray-200 text-gray-800"
                   : blocked
                   ? "bg-red-100 text-red-500"
+                  : isInRental(date)        
+                  ? "bg-orange-100 text-orange-500 cursor-not-allowed"
                   : isToday
                   ? "text-black font-bold underline underline-offset-2"
                   : "hover:bg-gray-100 text-gray-700",
@@ -273,6 +285,17 @@ export function UnavailabilityCalendar({
           >
             {saving ? "Saving…" : "Add Block"}
           </Button>
+        </div>
+        {/* Legend */}
+        <div className="flex gap-3 mt-2 justify-center">
+          <div className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-red-100 border border-red-300" />
+            <span className="text-[10px] text-gray-400">Blocked</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-orange-100 border border-orange-300" />
+            <span className="text-[10px] text-gray-400">Rented</span>
+          </div>
         </div>
       </div>
     </div>

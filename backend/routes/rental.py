@@ -71,7 +71,6 @@ def create_rental():
         end_date=data.get('end_date'),
     )
 
-    item.available = False
     db.session.add(rental)
     db.session.commit()
 
