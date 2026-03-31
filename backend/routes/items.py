@@ -89,12 +89,9 @@ def get_my_items():
 @items_bp.route('/browse-items', methods=['GET'])
 def get_browse_items():
     user_id = session.get('user_id')
-    today = date.today()
-
     query = Item.query
     if user_id:
         query = query.filter(Item.owner_id != user_id)
 
     items = query.order_by(Item.created_at.desc()).all()
-    available = [item for item in items if is_item_available_on_date(item.id, today)]
-    return jsonify([serialize_item(item) for item in available])
+    return jsonify([serialize_item(item) for item in items])
