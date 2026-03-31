@@ -65,6 +65,13 @@ export function Profile() {
     } catch (err) { console.error(err); }
   };
 
+  const formatDate = (dateStr: string) => {
+    const [year, month, day] = dateStr.split("-");
+    return new Date(+year, +month - 1, +day).toLocaleDateString("en-US", {
+      day: "2-digit", month: "2-digit", year: "numeric"
+    });
+  };
+
   const refreshItems = async () => {
     try {
       const res = await fetch(`${API_URL}/api/my-items`, { credentials: "include" });
@@ -325,7 +332,7 @@ export function Profile() {
                           </div>
                           <p className="text-sm text-gray-600 mb-1">From: {rental.owner_name}</p>
                           {rental.start_date && rental.end_date && (
-                            <p className="text-sm text-gray-600 mb-3">{new Date(rental.start_date).toLocaleDateString()} → {new Date(rental.end_date).toLocaleDateString()}</p>
+                            <p className="text-sm text-gray-600 mb-3">{formatDate(rental.start_date)} → {formatDate(rental.end_date)}</p>
                           )}
                           {rental.status === "pending_pickup" && (
                             <div className="bg-black text-white rounded-lg p-3 mb-3 text-center">

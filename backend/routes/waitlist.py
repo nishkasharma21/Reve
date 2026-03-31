@@ -20,6 +20,8 @@ def add_to_waitlist():
         return jsonify({"error": "Last name is required"}), 400
     if not email:
         return jsonify({"error": "Email is required"}), 400
+    if not email.endswith("@stanford.edu"):
+        return jsonify({"error": "Only Stanford email addresses are allowed"}), 400
     
     # Check if email already in database
     existing = Waitlist.query.filter_by(email=email).first()
