@@ -10,7 +10,40 @@ stripe.api_key = os.getenv('STRIPE_SECRET_KEY', '').strip()
 rental_bp = Blueprint('rental', __name__)
 
 
-def send_rental_email(lender_email, lender_name, borrower_name, item_name):
+def send_borrower_confirmation_email(borrower_email, borrower_name, item_name, pickup_code, start_date, end_date, lender_name):
+    try:
+        mail = current_app.extensions.get('mail')
+        if not mail:
+            return False
+        from flask_mail import Message
+        msg = Message(
+            subject=f"Your rental of {item_name} is confirmed",
+            recipients=[borrower_email],
+            html=f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #333;">Rental confirmed</h2>
+                <p>Hi {borrower_name},</p>
+                <p>Your rental of <strong>{item_name}</strong> from <strong>{lender_name}</strong> is confirmed.</p>
+                <p><strong>Dates:</strong> {start_date} → {end_date}</p>
+                <p>Show this pickup code to the lender when you meet:</p>
+                <div style="background: #000; color: #fff; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
+                    <p style="margin: 0 0 8px; font-size: 12px; letter-spacing: 2px; text-transform: uppercase;">Pickup Code</p>
+                    <p style="margin: 0; font-size: 48px; font-weight: bold; letter-spacing: 12px;">{pickup_code}</p>
+                </div>
+                <p style="color: #666; font-size: 14px; margin-top: 30px;">
+                    This is an automated message from Reve. Please do not reply to this email.
+                </p>
+            </div>
+            """
+        )
+        mail.send(msg)
+        return True
+    except Exception as e:
+        print(f"❌ Failed to send borrower confirmation email: {e}")
+        return False
+
+
+def send_rental_email(lender_email, lender_name, borrower_name, item_name, rental_id):
     try:
         mail = current_app.extensions.get('mail')
         if not mail:
@@ -26,10 +59,10 @@ def send_rental_email(lender_email, lender_name, borrower_name, item_name):
                 <h2 style="color: #333;">Your item has been rented</h2>
                 <p>Hi {lender_name},</p>
                 <p><strong>{borrower_name}</strong> has rented your item <strong>{item_name}</strong>.</p>
-                <p>Head to your messages to arrange a pickup time and location.</p>
-                <a href="{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/messages"
+                <p>When you meet for pickup, tap the button below to enter the borrower's code and confirm the handoff.</p>
+                <a href="{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/rentals/{rental_id}/confirm-pickup"
                 style="display: inline-block; background-color: #000; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: 600; font-size: 16px;">
-                    Go to Messages
+                    Confirm Pickup
                 </a>
                 <p style="color: #666; font-size: 14px; margin-top: 30px;">
                     This is an automated message from Reve. Please do not reply to this email.
@@ -93,8 +126,13 @@ def create_rental():
             description=f"Reve rental: {item.item_name} ({start_date} to {end_date})",
         )
         if lender.stripe_account_id:
-            intent_params['transfer_data'] = {'destination': lender.stripe_account_id}
-            intent_params['application_fee_amount'] = 0  # platform takes no cut for now
+            try:
+                acct = stripe.Account.retrieve(lender.stripe_account_id)
+                if acct.charges_enabled:
+                    intent_params['transfer_data'] = {'destination': lender.stripe_account_id}
+                    intent_params['application_fee_amount'] = 0  # platform takes no cut for now
+            except stripe.StripeError:
+                pass  # fall through and charge to platform account
         intent = stripe.PaymentIntent.create(**intent_params)
     except stripe.StripeError as e:
         return jsonify({'error': str(e)}), 400
@@ -124,6 +162,16 @@ def create_rental():
         lender_name=lender.firstName,
         borrower_name=f"{borrower.firstName} {borrower.lastName}",
         item_name=item.item_name,
+        rental_id=rental.id,
+    )
+    send_borrower_confirmation_email(
+        borrower_email=borrower.email,
+        borrower_name=borrower.firstName,
+        item_name=item.item_name,
+        pickup_code=pickup_code,
+        start_date=start_date,
+        end_date=end_date,
+        lender_name=lender.firstName,
     )
 
     return jsonify({
@@ -133,6 +181,29 @@ def create_rental():
         'client_secret': intent.client_secret,
         'total_amount': total_cents,
     }), 201
+
+
+@rental_bp.route('/rentals/<int:rental_id>', methods=['GET'])
+@login_required
+def get_rental(rental_id):
+    user_id = session.get('user_id')
+    rental = db.session.get(Rental, rental_id)
+    if not rental:
+        return jsonify({'error': 'Rental not found'}), 404
+    if rental.borrower_id != user_id and rental.owner_id != user_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    return jsonify({
+        'id': rental.id,
+        'item_name': rental.item.item_name,
+        'item_image': rental.item.images[0] if rental.item.images else None,
+        'owner_name': f"{rental.owner.firstName} {rental.owner.lastName}",
+        'borrower_name': f"{rental.borrower.firstName} {rental.borrower.lastName}",
+        'status': rental.status,
+        'pickup_code': rental.pickup_code if rental.borrower_id == user_id else None,
+        'start_date': rental.start_date.isoformat() if rental.start_date else None,
+        'end_date': rental.end_date.isoformat() if rental.end_date else None,
+        'total_amount': rental.total_amount,
+    }), 200
 
 
 @rental_bp.route('/rentals', methods=['GET'])
