@@ -24,6 +24,12 @@ export function isItemAvailableFromBlocks(blocks: Block[]): boolean {
   return !blocks.some(b => toDate(b.start_date) <= today && toDate(b.end_date) >= today);
 }
 
+export const isInExistingBlock = (d: Date, blocks: Block[]) =>
+  blocks.some(b => toDate(b.start_date) <= d && toDate(b.end_date) >= d);
+
+export const isInRental = (d: Date, rentals: RentalRange[]) =>
+  rentals.some(r => toDate(r.start_date) <= d && toDate(r.end_date) >= d);
+
 export function UnavailabilityCalendar({
   itemId,
   blocks,
@@ -71,16 +77,10 @@ export function UnavailabilityCalendar({
   const lo = selStart && selEnd ? (selStart <= selEnd ? selStart : selEnd) : selStart;
   const hi = selStart && selEnd ? (selStart <= selEnd ? selEnd : selStart) : selStart;
 
-  const isInExistingBlock = (d: Date) =>
-    blocks.some(b => toDate(b.start_date) <= d && toDate(b.end_date) >= d);
-
   const isSelStart  = (d: Date) => lo?.toDateString() === d.toDateString();
   const isSelEnd    = (d: Date) => !!hi && hi.toDateString() === d.toDateString() && lo?.toDateString() !== hi.toDateString();
   const isInSelRange = (d: Date) => !!(lo && hi && d > lo && d < hi);
   const isPast      = (d: Date) => d < today;
-
-  const isInRental = (d: Date) =>
-    rentals.some(r => toDate(r.start_date) <= d && toDate(r.end_date) >= d);
 
   const handleDayClick = (date: Date) => {
     if (isPast(date)) return;
@@ -219,7 +219,6 @@ export function UnavailabilityCalendar({
         {cells.map((date, i) => {
           if (!date) return <div key={`empty-${i}`} />;
           const past      = isPast(date);
-          const blocked   = isInExistingBlock(date);
           const selStart_ = isSelStart(date);
           const selEnd_   = isSelEnd(date);
           const inSel     = isInSelRange(date);
@@ -228,7 +227,7 @@ export function UnavailabilityCalendar({
           return (
             <button
               key={date.toDateString()}
-              disabled={past || isInRental(date) || isInExistingBlock(date)}   
+              disabled={past || isInRental(date, rentals) || isInExistingBlock(date, blocks)}   
               onClick={() => handleDayClick(date)}
               onMouseEnter={() => handleMouseEnter(date)}
               className={[
@@ -238,9 +237,9 @@ export function UnavailabilityCalendar({
                   ? "bg-black text-white"
                   : inSel
                   ? "bg-gray-200 text-gray-800"
-                  : blocked
+                  : isInExistingBlock(date, blocks)
                   ? "bg-red-100 text-red-500"
-                  : isInRental(date)        
+                  : isInRental(date, rentals)        
                   ? "bg-orange-100 text-orange-500 cursor-not-allowed"
                   : isToday
                   ? "text-black font-bold underline underline-offset-2"

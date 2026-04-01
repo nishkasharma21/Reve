@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { format } from "date-fns";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { toast } from "sonner";
+import { toDate, isInExistingBlock, isInRental } from "./unavailabilitycalendar";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -168,6 +169,14 @@ export function ItemDetail() {
       </div>
     );
   }
+
+  const isDateUnavailable = (date: Date): boolean => {
+    const d = new Date(date); d.setHours(0, 0, 0, 0);
+    return (
+      isInExistingBlock(d, item?.unavailability_blocks ?? []) ||
+      isInRental(d, item?.active_rentals ?? [])
+    );
+  };
 
   // ── Shared input classes ──────────────────────────────────────────────────
   const inputCls = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black";
@@ -339,7 +348,9 @@ export function ItemDetail() {
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar mode="single" selected={startDate} onSelect={setStartDate}
-                        disabled={(date) => date < new Date()} />
+                        disabled={(date) => date < new Date() || isDateUnavailable(date)}  
+                        modifiers={{ unavailable: (date) => isDateUnavailable(date) }}
+                        modifiersClassNames={{ unavailable: "bg-red-100 text-red-400" }}/>
                     </PopoverContent>
                   </Popover>
 
@@ -352,7 +363,9 @@ export function ItemDetail() {
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar mode="single" selected={endDate} onSelect={setEndDate}
-                        disabled={(date) => date < new Date() || (startDate ? date <= startDate : false)} />
+                        disabled={(date) => date < new Date() || (startDate ? date <= startDate : false || isDateUnavailable(date))}
+                        modifiers={{ unavailable: (date) => isDateUnavailable(date) }}
+                        modifiersClassNames={{ unavailable: "bg-red-100 text-red-400" }} />
                     </PopoverContent>
                   </Popover>
                 </div>
