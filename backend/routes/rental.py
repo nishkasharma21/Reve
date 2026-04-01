@@ -5,7 +5,7 @@ from backend.utils import login_required
 import os
 import stripe
 
-stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY', '').strip()
 
 rental_bp = Blueprint('rental', __name__)
 
@@ -76,7 +76,8 @@ def create_rental():
     # and charged only when the lender confirms pickup.
     try:
         borrower = db.session.get(User, user_id)
-        intent = stripe.PaymentIntent.create(
+        lender = db.session.get(User, item.owner_id)
+        intent_params = dict(
             amount=total_cents,
             currency='usd',
             capture_method='manual',
@@ -91,6 +92,10 @@ def create_rental():
             },
             description=f"Reve rental: {item.item_name} ({start_date} to {end_date})",
         )
+        if lender.stripe_account_id:
+            intent_params['transfer_data'] = {'destination': lender.stripe_account_id}
+            intent_params['application_fee_amount'] = 0  # platform takes no cut for now
+        intent = stripe.PaymentIntent.create(**intent_params)
     except stripe.StripeError as e:
         return jsonify({'error': str(e)}), 400
 
@@ -114,7 +119,6 @@ def create_rental():
     db.session.add(rental)
     db.session.commit()
 
-    lender = db.session.get(User, item.owner_id)
     send_rental_email(
         lender_email=lender.email,
         lender_name=lender.firstName,

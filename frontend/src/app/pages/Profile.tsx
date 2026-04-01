@@ -6,7 +6,7 @@ import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import {
   MapPin, Mail, Edit, Package, Clock, Inbox, PlusCircle,
-  ArrowDownToLine, CalendarOff
+  ArrowDownToLine, CalendarOff, Banknote
 } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { UnavailabilityCalendar, Block, toDate, isItemAvailableFromBlocks, RentalRange } from "./unavailabilitycalendar";
@@ -52,6 +52,21 @@ export function Profile() {
   const [manageOpenFor, setManageOpenFor] = useState<number | null>(null);
   const [blocksByItem, setBlocksByItem] = useState<Record<number, Block[]>>({});
   const [rentalsByItem, setRentalsByItem] = useState<Record<number, RentalRange[]>>({});
+
+  const [connectingPayout, setConnectingPayout] = useState(false);
+
+  const handleConnectPayout = async () => {
+    setConnectingPayout(true);
+    try {
+      await fetch(`${API_URL}/api/connect/account`, { method: "POST", credentials: "include" });
+      const res = await fetch(`${API_URL}/api/connect/account-link`, { method: "POST", credentials: "include" });
+      if (res.ok) {
+        const { url } = await res.json();
+        window.location.href = url;
+      }
+    } catch (err) { console.error(err); }
+    setConnectingPayout(false);
+  };
 
   const [pickupInput, setPickupInput] = useState<Record<number, string>>({});
   const [pickupError, setPickupError] = useState<Record<number, string>>({});
@@ -199,6 +214,15 @@ export function Profile() {
                   <Edit size={16} className="mr-2" />Edit Profile
                 </Link>
               </Button>
+              {user.stripe_account_id ? (
+                <p className="text-xs text-green-600 text-center mt-3 flex items-center justify-center gap-1">
+                  <Banknote size={14} />Payout account connected
+                </p>
+              ) : (
+                <Button variant="outline" className="w-full mt-2" onClick={handleConnectPayout} disabled={connectingPayout}>
+                  <Banknote size={16} className="mr-2" />{connectingPayout ? "Redirecting..." : "Connect Payout Account"}
+                </Button>
+              )}
             </CardContent>
           </Card>
         </aside>

@@ -8,6 +8,7 @@ from backend.models import User, Item, Rental
 from backend.routes.rental import rental_bp
 from backend.routes.items import items_bp
 from backend.routes.item_blocks import item_blocks_bp
+from backend.routes.connect import connect_bp
 from flask_mail import Mail, Message
 import os
 from datetime import datetime
@@ -58,6 +59,7 @@ def create_app():
     app.register_blueprint(rental_bp, url_prefix='/api')
     app.register_blueprint(items_bp, url_prefix='/api')
     app.register_blueprint(item_blocks_bp, url_prefix='/api')
+    app.register_blueprint(connect_bp, url_prefix='/api')
 
 
     # ── Routes ────────────────────────────────────────────────────────────────
@@ -113,6 +115,7 @@ def create_app():
             "height": user.height,
             "weight": user.weight,
             "joinDate": user.created_at.isoformat(),
+            "stripe_account_id": user.stripe_account_id,
         })
         
     @app.after_request

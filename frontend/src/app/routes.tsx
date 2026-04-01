@@ -13,6 +13,7 @@ import { Layout } from './Layout';
 import { useAuth } from '../contexts/AuthContexts';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { EditProfile } from "./components/EditProfile";
+import { StripeReturn } from "./pages/StripeReturn";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -83,6 +84,10 @@ export const router = createBrowserRouter([
       {
         path: '/how-it-works',
         Component: HowItWorks,
+      },
+      {
+        path: '/stripe-return',
+        Component: StripeReturn,
       },
       {
         path: '*',
