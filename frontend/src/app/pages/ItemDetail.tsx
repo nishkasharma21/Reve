@@ -10,8 +10,97 @@ import { format } from "date-fns";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { toast } from "sonner";
 import { toDate, isInExistingBlock, isInRental } from "./unavailabilitycalendar";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 
 const API_URL = import.meta.env.VITE_API_URL;
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+
+// ─── Payment Modal ──────────────────────────────────────────────────────────
+
+interface PaymentModalProps {
+  clientSecret: string;
+  totalAmount: number;  // cents
+  itemName: string;
+  onSuccess: () => void;
+  onClose: () => void;
+}
+
+function PaymentForm({ clientSecret, totalAmount, itemName, onSuccess, onClose }: PaymentModalProps) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [paying, setPaying] = useState(false);
+  const [cardError, setCardError] = useState<string | null>(null);
+
+  const handlePay = async () => {
+    if (!stripe || !elements) return;
+    if (!clientSecret) {
+      setCardError("Payment not initialized. Please close and try again.");
+      return;
+    }
+    setPaying(true);
+    setCardError(null);
+
+    const card = elements.getElement(CardElement);
+    if (!card) { setPaying(false); return; }
+
+    const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: { card },
+    });
+
+    if (error) {
+      setCardError(error.message ?? "Payment failed");
+      setPaying(false);
+    } else if (paymentIntent?.status === "requires_capture") {
+      // Manual capture — authorization succeeded, charge happens at pickup
+      onSuccess();
+    } else {
+      setCardError("Unexpected payment status. Please try again.");
+      setPaying(false);
+    }
+  };
+
+  return (
+    <div>
+      <p className="text-sm text-gray-600 mb-4">
+        Your card will be authorized for <strong>${(totalAmount / 100).toFixed(2)}</strong> and
+        only charged when the lender confirms pickup of <strong>{itemName}</strong>.
+      </p>
+      <div className="border rounded-lg px-4 py-3 mb-4 bg-gray-50">
+        <CardElement options={{ style: { base: { fontSize: "16px", color: "#111" } } }} />
+      </div>
+      {cardError && <p className="text-red-500 text-sm mb-3">{cardError}</p>}
+      <div className="flex gap-3">
+        <Button type="button" variant="outline" className="flex-1" onClick={onClose} disabled={paying}>
+          Cancel
+        </Button>
+        <Button type="button" className="flex-1" disabled={paying || !stripe} onClick={handlePay}>
+          {paying ? "Processing..." : `Authorize $${(totalAmount / 100).toFixed(2)}`}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function PaymentModal({ clientSecret, totalAmount, itemName, onSuccess, onClose }: PaymentModalProps) {
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+      <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+        <h2 className="text-xl font-bold mb-1">Confirm Payment</h2>
+        <p className="text-sm text-gray-500 mb-4">Enter your card details to complete the rental request</p>
+        <Elements stripe={stripePromise} options={{ clientSecret }}>
+          <PaymentForm
+            clientSecret={clientSecret}
+            totalAmount={totalAmount}
+            itemName={itemName}
+            onSuccess={onSuccess}
+            onClose={onClose}
+          />
+        </Elements>
+      </div>
+    </div>
+  );
+}
 
 const CONDITIONS = ["New", "Like New", "Good", "Fair"];
 const CATEGORIES = ["Tops", "Bottoms", "Dresses", "Outerwear", "Shoes", "Accessories", "Other"];
@@ -32,6 +121,7 @@ export function ItemDetail() {
   const [endDate,   setEndDate]   = useState<Date>();
   const [isLiked,   setIsLiked]   = useState(false);
   const [requesting, setRequesting] = useState(false);
+  const [paymentModal, setPaymentModal] = useState<{ clientSecret: string; totalAmount: number } | null>(null);
 
   // Edit state
   const [isEditing, setIsEditing] = useState(editParam);
@@ -141,8 +231,8 @@ export function ItemDetail() {
         }),
       });
       if (res.ok) {
-        toast.success("Rental requested successfully!");
-        navigate("/profile?tab=borrowed");
+        const data = await res.json();
+        setPaymentModal({ clientSecret: data.client_secret, totalAmount: calculateTotal() * 100 });
       } else {
         const err = await res.json();
         toast.error(err.error || "Failed to rent item");
@@ -183,6 +273,19 @@ export function ItemDetail() {
 
   return (
     <div>
+      {paymentModal && (
+        <PaymentModal
+          clientSecret={paymentModal.clientSecret}
+          totalAmount={paymentModal.totalAmount}
+          itemName={item.item_name}
+          onSuccess={() => {
+            setPaymentModal(null);
+            toast.success("Rental confirmed! Your card has been authorized.");
+            navigate("/profile?tab=borrowed");
+          }}
+          onClose={() => setPaymentModal(null)}
+        />
+      )}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-between">
         <Link to="/browse" className="inline-flex items-center text-sm hover:underline">
           <ArrowLeft size={16} className="mr-2" />Back to Browse

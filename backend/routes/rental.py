@@ -3,6 +3,9 @@ from backend.models import Item, User, Rental
 from backend.extensions import db
 from backend.utils import login_required
 import os
+import stripe
+
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
 rental_bp = Blueprint('rental', __name__)
 
@@ -24,7 +27,7 @@ def send_rental_email(lender_email, lender_name, borrower_name, item_name):
                 <p>Hi {lender_name},</p>
                 <p><strong>{borrower_name}</strong> has rented your item <strong>{item_name}</strong>.</p>
                 <p>Head to your messages to arrange a pickup time and location.</p>
-                <a href="{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/messages" 
+                <a href="{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/messages"
                 style="display: inline-block; background-color: #000; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: 600; font-size: 16px;">
                     Go to Messages
                 </a>
@@ -42,12 +45,21 @@ def send_rental_email(lender_email, lender_name, borrower_name, item_name):
         return False
 
 
+def _calculate_days(start_date_str, end_date_str):
+    from datetime import date
+    start = date.fromisoformat(start_date_str)
+    end = date.fromisoformat(end_date_str)
+    return max((end - start).days, 1)
+
+
 @rental_bp.route('/rentals', methods=['POST'])
 @login_required
 def create_rental():
     user_id = session.get('user_id')
     data = request.get_json()
     item_id = data.get('item_id')
+    start_date = data.get('start_date')
+    end_date = data.get('end_date')
 
     item = db.session.get(Item, item_id)
     if not item:
@@ -56,6 +68,31 @@ def create_rental():
         return jsonify({'error': 'Cannot rent your own item'}), 400
     if not item.available:
         return jsonify({'error': 'Item is not available'}), 400
+
+    days = _calculate_days(start_date, end_date)
+    total_cents = days * item.price_per_day * 100  # price_per_day is in dollars
+
+    # Create a PaymentIntent with manual capture so the card is authorized now
+    # and charged only when the lender confirms pickup.
+    try:
+        borrower = db.session.get(User, user_id)
+        intent = stripe.PaymentIntent.create(
+            amount=total_cents,
+            currency='usd',
+            capture_method='manual',
+            metadata={
+                'item_id': item_id,
+                'borrower_id': user_id,
+                'owner_id': item.owner_id,
+                'start_date': start_date,
+                'end_date': end_date,
+                'item_name': item.item_name,
+                'borrower_email': borrower.email,
+            },
+            description=f"Reve rental: {item.item_name} ({start_date} to {end_date})",
+        )
+    except stripe.StripeError as e:
+        return jsonify({'error': str(e)}), 400
 
     pickup_code = Rental.generate_code()
     return_code = Rental.generate_code()
@@ -67,15 +104,17 @@ def create_rental():
         status='pending_pickup',
         pickup_code=pickup_code,
         return_code=return_code,
-        start_date=data.get('start_date'),
-        end_date=data.get('end_date'),
+        start_date=start_date,
+        end_date=end_date,
+        payment_intent_id=intent.id,
+        total_amount=total_cents,
     )
 
+    item.available = False
     db.session.add(rental)
     db.session.commit()
 
     lender = db.session.get(User, item.owner_id)
-    borrower = db.session.get(User, user_id)
     send_rental_email(
         lender_email=lender.email,
         lender_name=lender.firstName,
@@ -87,6 +126,8 @@ def create_rental():
         'success': True,
         'id': rental.id,
         'pickup_code': pickup_code,
+        'client_secret': intent.client_secret,
+        'total_amount': total_cents,
     }), 201
 
 
@@ -109,6 +150,7 @@ def get_rentals():
             'pickup_code': r.pickup_code,
             'start_date': r.start_date.isoformat() if r.start_date else None,
             'end_date': r.end_date.isoformat() if r.end_date else None,
+            'total_amount': r.total_amount,
             'created_at': r.created_at.isoformat(),
         }
 
@@ -123,6 +165,7 @@ def get_rentals():
             'return_code': r.return_code if r.status == 'in_use' else None,
             'start_date': r.start_date.isoformat() if r.start_date else None,
             'end_date': r.end_date.isoformat() if r.end_date else None,
+            'total_amount': r.total_amount,
             'created_at': r.created_at.isoformat(),
         }
 
@@ -147,6 +190,13 @@ def confirm_pickup(rental_id):
     code = request.get_json().get('code')
     if code != rental.pickup_code:
         return jsonify({'error': 'Incorrect pickup code'}), 400
+
+    # Capture the Stripe PaymentIntent — this is when the borrower's card is charged
+    if rental.payment_intent_id:
+        try:
+            stripe.PaymentIntent.capture(rental.payment_intent_id)
+        except stripe.StripeError as e:
+            return jsonify({'error': f'Payment capture failed: {str(e)}'}), 400
 
     rental.update_status('in_use')
     db.session.commit()
@@ -185,6 +235,13 @@ def cancel_rental(rental_id):
         return jsonify({'error': 'Unauthorized'}), 403
     if rental.status not in ('pending_pickup', 'in_use'):
         return jsonify({'error': 'Cannot cancel this rental'}), 400
+
+    # Cancel the PaymentIntent so the authorization is released (no charge)
+    if rental.payment_intent_id and rental.status == 'pending_pickup':
+        try:
+            stripe.PaymentIntent.cancel(rental.payment_intent_id)
+        except stripe.StripeError as e:
+            print(f"⚠️  Could not cancel PaymentIntent: {e}")
 
     rental.update_status('cancelled')
     db.session.commit()

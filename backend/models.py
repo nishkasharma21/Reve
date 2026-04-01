@@ -84,7 +84,12 @@ class Rental(db.Model):
     # Return code — lender shows to borrower to confirm return
     pickup_code = db.Column(db.String(4), nullable=True)
     return_code = db.Column(db.String(4), nullable=True)
-    
+
+    # Stripe payment — PaymentIntent created with manual capture on rental request,
+    # captured (charged) when lender confirms pickup code
+    payment_intent_id = db.Column(db.String(100), nullable=True)
+    total_amount = db.Column(db.Integer, nullable=True)  # in cents
+
     start_date = db.Column(db.Date)
     end_date = db.Column(db.Date)
     created_at = db.Column(db.DateTime, server_default=func.now())
