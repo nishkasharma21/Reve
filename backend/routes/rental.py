@@ -194,6 +194,7 @@ def create_rental():
         lender_name=lender.firstName,
         borrower_name=f"{borrower.firstName} {borrower.lastName}",
         item_name=item.item_name,
+        rental_id=rental.id,
     )
     send_borrower_confirmation_email(
         borrower_email=borrower.email,
