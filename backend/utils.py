@@ -1,7 +1,9 @@
 from functools import wraps
 from flask import session, jsonify
 from backend.models import Rental, ItemUnavailability
+from datetime import date
 
+today = date.today()
 
 def login_required(f):
     """Decorator that returns 401 if the user is not logged in."""
@@ -26,9 +28,25 @@ def serialize_item(item):
         "condition": item.condition,
         "price_per_day": item.price_per_day,
         "images": item.images,
-        "available": item.available,
+        "available": is_item_available_on_date(item.id, today),
         "created_at": item.created_at.isoformat(),
     }
+
+def is_item_available_for_range(item_id, start_date, end_date):
+    rental_conflict = Rental.query.filter(
+        Rental.item_id == item_id,
+        Rental.status.in_(['pending_pickup', 'in_use']),
+        Rental.start_date <= end_date,
+        Rental.end_date >= start_date
+    ).first()
+
+    block_conflict = ItemUnavailability.query.filter(
+        ItemUnavailability.item_id == item_id,
+        ItemUnavailability.start_date <= end_date,
+        ItemUnavailability.end_date >= start_date
+    ).first()
+
+    return rental_conflict is None and block_conflict is None
 
 def is_item_available_on_date(item_id, check_date):
     rental_conflict = Rental.query.filter(

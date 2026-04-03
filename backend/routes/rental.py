@@ -1,8 +1,9 @@
 from flask import Blueprint, request, jsonify, session, current_app
 from backend.models import Item, User, Rental
 from backend.extensions import db
-from backend.utils import login_required
+from backend.utils import login_required, is_item_available_for_range
 import os
+from datetime import date
 
 rental_bp = Blueprint('rental', __name__)
 
@@ -49,12 +50,15 @@ def create_rental():
     data = request.get_json()
     item_id = data.get('item_id')
 
+    start = date.fromisoformat(date.get('start_date'))
+    end = date.fromisoformat(data.get('end_date'))
+
     item = db.session.get(Item, item_id)
     if not item:
         return jsonify({'error': 'Item not found'}), 404
     if item.owner_id == user_id:
         return jsonify({'error': 'Cannot rent your own item'}), 400
-    if not item.available:
+    if not is_item_available_for_range(item_id, start, end):
         return jsonify({'error': 'Item is not available'}), 400
 
     pickup_code = Rental.generate_code()
