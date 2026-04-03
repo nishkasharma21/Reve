@@ -10,6 +10,38 @@ stripe.api_key = os.getenv('STRIPE_SECRET_KEY', '').strip()
 rental_bp = Blueprint('rental', __name__)
 
 
+def send_lender_return_code_email(lender_email, lender_name, borrower_name, item_name, return_code):
+    try:
+        mail = current_app.extensions.get('mail')
+        if not mail:
+            return False
+        from flask_mail import Message
+        msg = Message(
+            subject=f"Your return code for {item_name}",
+            recipients=[lender_email],
+            html=f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #333;">Show this code when the item is returned</h2>
+                <p>Hi {lender_name},</p>
+                <p><strong>{borrower_name}</strong> will be returning <strong>{item_name}</strong> soon.</p>
+                <p>When they return the item, show them this code to confirm the return:</p>
+                <div style="background: #000; color: #fff; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
+                    <p style="margin: 0 0 8px; font-size: 12px; letter-spacing: 2px; text-transform: uppercase;">Return Code</p>
+                    <p style="margin: 0; font-size: 48px; font-weight: bold; letter-spacing: 12px;">{return_code}</p>
+                </div>
+                <p style="color: #666; font-size: 14px; margin-top: 30px;">
+                    This is an automated message from Reve. Please do not reply to this email.
+                </p>
+            </div>
+            """
+        )
+        mail.send(msg)
+        return True
+    except Exception as e:
+        print(f"❌ Failed to send lender return code email: {e}")
+        return False
+
+
 def send_borrower_return_email(borrower_email, borrower_name, item_name, rental_id, lender_name):
     try:
         mail = current_app.extensions.get('mail')
@@ -290,7 +322,7 @@ def confirm_pickup(rental_id):
     if not rental:
         return jsonify({'error': 'Rental not found'}), 404
     if rental.owner_id != user_id:
-        return jsonify({'error': 'Unauthorized'}), 403
+        return jsonify({'error': 'Only the lender can confirm pickup. Make sure you are logged in as the correct account.'}), 403
     if rental.status != 'pending_pickup':
         return jsonify({'error': 'Rental is not pending pickup'}), 400
 
@@ -313,6 +345,13 @@ def confirm_pickup(rental_id):
         item_name=rental.item.item_name,
         rental_id=rental_id,
         lender_name=rental.owner.firstName,
+    )
+    send_lender_return_code_email(
+        lender_email=rental.owner.email,
+        lender_name=rental.owner.firstName,
+        borrower_name=f"{rental.borrower.firstName} {rental.borrower.lastName}",
+        item_name=rental.item.item_name,
+        return_code=rental.return_code,
     )
     return jsonify({'success': True, 'status': 'in_use'}), 200
 
@@ -358,5 +397,12 @@ def cancel_rental(rental_id):
             print(f"⚠️  Could not cancel PaymentIntent: {e}")
 
     rental.update_status('cancelled')
+    other_active = Rental.query.filter(
+        Rental.item_id == rental.item_id,
+        Rental.id != rental_id,
+        Rental.status.in_(['pending_pickup', 'in_use'])
+    ).first()
+    if not other_active:
+        rental.item.available = True
     db.session.commit()
     return jsonify({'success': True, 'status': 'cancelled'}), 200
