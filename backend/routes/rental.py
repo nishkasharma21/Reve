@@ -50,7 +50,7 @@ def create_rental():
     data = request.get_json()
     item_id = data.get('item_id')
 
-    start = date.fromisoformat(date.get('start_date'))
+    start = date.fromisoformat(data.get('start_date'))
     end = date.fromisoformat(data.get('end_date'))
 
     item = db.session.get(Item, item_id)
