@@ -10,6 +10,38 @@ stripe.api_key = os.getenv('STRIPE_SECRET_KEY', '').strip()
 rental_bp = Blueprint('rental', __name__)
 
 
+def send_borrower_return_email(borrower_email, borrower_name, item_name, rental_id, lender_name):
+    try:
+        mail = current_app.extensions.get('mail')
+        if not mail:
+            return False
+        from flask_mail import Message
+        msg = Message(
+            subject=f"Your rental of {item_name} has started",
+            recipients=[borrower_email],
+            html=f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #333;">Pickup confirmed</h2>
+                <p>Hi {borrower_name},</p>
+                <p>Your rental of <strong>{item_name}</strong> from <strong>{lender_name}</strong> is now active.</p>
+                <p>When you return the item, tap the button below to enter the lender's return code and confirm the return.</p>
+                <a href="{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/rentals/{rental_id}/confirm-return"
+                style="display: inline-block; background-color: #000; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: 600; font-size: 16px;">
+                    Confirm Return
+                </a>
+                <p style="color: #666; font-size: 14px; margin-top: 30px;">
+                    This is an automated message from Reve. Please do not reply to this email.
+                </p>
+            </div>
+            """
+        )
+        mail.send(msg)
+        return True
+    except Exception as e:
+        print(f"❌ Failed to send borrower return email: {e}")
+        return False
+
+
 def send_borrower_confirmation_email(borrower_email, borrower_name, item_name, pickup_code, start_date, end_date, lender_name):
     try:
         mail = current_app.extensions.get('mail')
@@ -162,7 +194,6 @@ def create_rental():
         lender_name=lender.firstName,
         borrower_name=f"{borrower.firstName} {borrower.lastName}",
         item_name=item.item_name,
-        rental_id=rental.id,
     )
     send_borrower_confirmation_email(
         borrower_email=borrower.email,
@@ -275,6 +306,13 @@ def confirm_pickup(rental_id):
 
     rental.update_status('in_use')
     db.session.commit()
+    send_borrower_return_email(
+        borrower_email=rental.borrower.email,
+        borrower_name=rental.borrower.firstName,
+        item_name=rental.item.item_name,
+        rental_id=rental_id,
+        lender_name=rental.owner.firstName,
+    )
     return jsonify({'success': True, 'status': 'in_use'}), 200
 
 
@@ -319,12 +357,5 @@ def cancel_rental(rental_id):
             print(f"⚠️  Could not cancel PaymentIntent: {e}")
 
     rental.update_status('cancelled')
-    other_active = Rental.query.filter(
-        Rental.item_id == rental.item_id,
-        Rental.id != rental_id,
-        Rental.status.in_(['pending_pickup', 'in_use'])
-    ).first()
-    if not other_active:
-        rental.item.available = True
     db.session.commit()
     return jsonify({'success': True, 'status': 'cancelled'}), 200
