@@ -319,5 +319,12 @@ def cancel_rental(rental_id):
             print(f"⚠️  Could not cancel PaymentIntent: {e}")
 
     rental.update_status('cancelled')
+    other_active = Rental.query.filter(
+        Rental.item_id == rental.item_id,
+        Rental.id != rental_id,
+        Rental.status.in_(['pending_pickup', 'in_use'])
+    ).first()
+    if not other_active:
+        rental.item.available = True
     db.session.commit()
     return jsonify({'success': True, 'status': 'cancelled'}), 200
